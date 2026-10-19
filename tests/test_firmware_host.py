@@ -1,5 +1,4 @@
-"""Compiles the firmware's pure-C++ headers with g++ and checks byte-for-byte equality with the Python encoder.
-Also syntax-checks patient_node.ino against minimal Arduino STUBS (a type check only - NOT a real Arduino build)."""
+"""Host checks for packet encoding, fall detection, sketch syntax, and local alert outputs."""
 import shutil, subprocess
 from pathlib import Path
 import pytest
@@ -25,3 +24,10 @@ def test_sketch_syntax_with_stubs():
     r = subprocess.run(["g++", "-std=c++17", "-fsyntax-only", "-Wall", f"-I{ROOT/'tests/firmware_host/stubs'}", f"-I{ROOT/'wokwi/patient_node'}",
                         "-include", "Arduino.h", "-x", "c++", str(ROOT / "wokwi/patient_node/patient_node.ino")], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+def test_local_alert_states_and_outputs(tmp_path):
+    exe = tmp_path / "alerts"
+    subprocess.run(["g++", "-std=c++17", "-Wall", f"-I{ROOT/'tests/firmware_host/stubs'}", f"-I{ROOT/'wokwi/patient_node'}",
+                    str(ROOT / "tests/firmware_host/alerts.cpp"), "-o", str(exe)], check=True)
+    subprocess.run([str(exe)], check=True)

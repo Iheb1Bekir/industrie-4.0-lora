@@ -21,5 +21,15 @@ int main() {
   FallDetector g; g.update(0, 0, 0.1f, 0);
   ok &= !g.update(0, 0, 3.2f, 2000);             // impact too late
   FallDetector h; ok &= !h.update(0, 0, 3.2f, 100);  // impact without free-fall
+  FallDetector stable;
+  ok &= !stable.update(0, 0, 1.0f, 0, 0, 0, 0);
+  ok &= !stable.update(0, 0, 1.0f, 0, 0, 0, 20);
+  ok &= !stable.active(20);
+  FallDetector suddenAccel;
+  suddenAccel.update(0, 0, 1.0f, 0, 0, 0, 0);
+  ok &= suddenAccel.update(1.8f, 0, 0, 0, 0, 0, 20);
+  FallDetector suddenRotation;
+  suddenRotation.update(0, 0, 1.0f, 0, 0, 0, 0);
+  ok &= suddenRotation.update(0, 0, 1.0f, 250, 0, 0, 20);
   printf("FALL_OK=%d\n", ok ? 1 : 0);
 }
