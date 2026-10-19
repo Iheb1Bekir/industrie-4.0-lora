@@ -19,6 +19,7 @@
 // ---------------- Configuration & pins ----------------
 static const uint16_t PATIENT_NUM = 1;               // -> "P001"
 static const uint32_t DEFAULT_INTERVAL_S = 60;       // report: 60 s cycle
+static const uint32_t DEFAULT_PATIENT_SAMPLE_INTERVAL_MS = 5000;
 static const uint8_t PIN_ONEWIRE = 4, PIN_SDA = 8, PIN_SCL = 9, PIN_LED = 5, PIN_BUZZER = 6;
 // Hardware-only SX1276 wiring (ESP32-S3 FSPI): SCK=12 MISO=13 MOSI=11 NSS=10 RST=14 DIO0=15 (3V3, GND)
 // Prototype local alert thresholds (same defaults as gateway/config.py; NOT clinically validated)
@@ -165,10 +166,73 @@ static Transport* transport = &serialTransport;
 
 static Scenario scenario = SC_NORMAL;
 static uint32_t intervalMs = DEFAULT_INTERVAL_S * 1000UL, lastTxMs = 0, lastImuMs = 0;
+static uint32_t patientSampleIntervalMs = DEFAULT_PATIENT_SAMPLE_INTERVAL_MS, lastPatientSampleMs = 0;
 static uint16_t patientNum = PATIENT_NUM, seqNo = 0;
-static bool sendNow = false, tempSynthetic = false, firstTx = true;
+static rpm::PatientProfile patientProfile = rpm::PROFILE_NORMAL;
+static bool sendNow = false, tempSynthetic = false, firstTx = true, patientSampleStarted = false;
+static bool simulatedFallPending = false;
 static uint8_t lastFlags = 0; static uint8_t lastHr = 0, lastSpo2 = 0; static int16_t lastTemp = 0;
 static String cmdBuf;
+
+// ---------------- Patient reading ----------------
+static rpm::PatientReading readPatientData(uint32_t now, rpm::PatientReadingSources& sources) {
+  const rpm::SimulatedVitals simulated = rpm::simulatedVitals(patientProfile);
+  rpm::PatientReading reading{};
+  reading.patient_id = patientNum;
+  reading.timestamp_ms = now;
+  reading.heart_rate_bpm = simulated.heart_rate_bpm;
+  reading.spo2_percent = simulated.spo2_percent;
+  sources.heart_rate = "SIMULATED_PROFILE";
+  sources.spo2 = "SIMULATED_PROFILE";
+
+  if (scenario == SC_LOW_SPO2) { reading.heart_rate_bpm = 88; reading.spo2_percent = 89; }
+  else if (scenario == SC_HIGH_HR) reading.heart_rate_bpm = 132;
+
+  float temperature = 0;
+  bool temperatureOk = false;
+  if (scenario == SC_HIGH_TEMP) {
+    temperature = 38.9f;
+    temperatureOk = true;
+    sources.temperature = "SIMULATED_SCENARIO";
+  } else if (tempSynthetic) {
+    temperature = simulated.temperature_c;
+    temperatureOk = true;
+    sources.temperature = "SIMULATED_PROFILE";
+  } else if (tempSensor.get(temperature)) {
+    temperatureOk = temperature >= 20.0f && temperature <= 45.0f;
+    sources.temperature = temperatureOk ? "DS18B20_SENSOR" : "UNAVAILABLE_OUT_OF_RANGE";
+  } else {
+    sources.temperature = "UNAVAILABLE_SENSOR";
+  }
+  sources.temperature_valid = temperatureOk;
+  if (temperatureOk) reading.temperature_c = temperature;
+
+  const bool commandFall = rpm::consumeSimulatedFall(simulatedFallPending);
+  const bool scenarioFall = scenario == SC_FALL;
+  const bool sensorFall = imu.ok() && fallDet.active(now);
+  reading.fall_detected = commandFall || scenarioFall || sensorFall;
+  if (commandFall) sources.fall = "SERIAL_COMMAND_SIMULATED";
+  else if (scenarioFall) sources.fall = "SIMULATED_SCENARIO";
+  else if (sensorFall) sources.fall = "MPU6050_HEURISTIC";
+  else sources.fall = imu.ok() ? "MPU6050_SENSOR_NO_FALL" : "UNAVAILABLE_ACCELEROMETER";
+
+  const bool critical = reading.fall_detected;
+  bool alert = critical || !sources.temperature_valid || !imu.ok();
+  alert |= reading.spo2_percent < SPO2_LOW || reading.heart_rate_bpm > HR_HIGH ||
+           reading.heart_rate_bpm < HR_LOW;
+  if (sources.temperature_valid) {
+    alert |= reading.temperature_c >= TEMP_HIGH_X100 / 100.0f ||
+             reading.temperature_c < TEMP_LOW_X100 / 100.0f;
+  }
+  alerts.set(alert, critical);
+  return reading;
+}
+
+static void printPatientData(const rpm::PatientReading& reading,
+                             const rpm::PatientReadingSources& sources) {
+  const std::string json = rpm::serializePatientReading(reading, sources);
+  Serial.println(json.c_str());
+}
 
 // ---------------- Telemetry build + send ----------------
 static void buildAndSend(uint32_t now) {
@@ -199,19 +263,6 @@ static void buildAndSend(uint32_t now) {
   Serial.printf("DBG {\"pid\":\"P%03u\",\"seq\":%u,\"hr\":%u,\"spo2\":%u,\"temp\":%.2f,\"flags\":%u,\"scenario\":\"%s\",\"uptime\":%lu,\"alert\":%d}\n",
                 t.pid, t.seq, t.hr, t.spo2, t.temp_x100 == rpm::TEMP_INVALID ? -999.0 : t.temp_x100 / 100.0,
                 t.flags, SC_NAMES[scenario], (unsigned long)t.uptime_s, (int)alert);
-  char patientId[5];
-  char timestamp[40];
-  snprintf(patientId, sizeof(patientId), "P%03u", t.pid);
-  snprintf(timestamp, sizeof(timestamp), "UPTIME+%lus (NOT UTC)", (unsigned long)t.uptime_s);
-  rpm::PatientReading reading{
-      patientId,
-      timestamp,
-      static_cast<int>(t.hr),
-      static_cast<float>(t.spo2),
-      t.temp_x100 == rpm::TEMP_INVALID ? 0.0f : t.temp_x100 / 100.0f,
-      fall};
-  const std::string patientJson = rpm::serializePatientReading(reading);
-  Serial.println(patientJson.c_str());
   bool ok = transport->send(buf, sizeof(buf), t.seq);
   if (!ok) Serial.println("ERR transmit failed (will retry next interval)");
   lastFlags = t.flags; lastHr = t.hr; lastSpo2 = t.spo2; lastTemp = t.temp_x100;
@@ -220,12 +271,16 @@ static void buildAndSend(uint32_t now) {
 
 // ---------------- Serial commands ----------------
 static void printHelp() {
-  Serial.println("Commands: HELP | STATUS | SEND | SET_INTERVAL <5..3600 s> | SET_PATIENT <1..999> | TEMP_SOURCE <SENSOR|SYNTH>");
+  Serial.println("Commands: HELP | STATUS | NORMAL | WARNING | CRITICAL | FALL");
+  Serial.println("          SET_SAMPLE_INTERVAL <1..3600 s> | SET_PATIENT <1..999> | TEMP_SOURCE <SENSOR|SYNTH>");
+  Serial.println("          SEND | SET_INTERVAL <5..3600 s> | SET_SCENARIO <...>");
   Serial.println("          SET_SCENARIO <NORMAL|LOW_SPO2|HIGH_HR|HIGH_TEMP|FALL|SENSOR_ERROR>");
 }
 
 static void printStatus(uint32_t now) {
-  Serial.printf("STATUS patient=P%03u scenario=%s interval=%lus seq=%u uptime=%lus transport=%s\n", patientNum, SC_NAMES[scenario],
+  Serial.printf("STATUS patient=%u profile=%s scenario=%s sample_interval=%lus tx_interval=%lus seq=%u uptime=%lus transport=%s\n",
+                patientNum, patientProfile == rpm::PROFILE_NORMAL ? "NORMAL" : patientProfile == rpm::PROFILE_WARNING ? "WARNING" : "CRITICAL", SC_NAMES[scenario],
+                (unsigned long)(patientSampleIntervalMs / 1000),
                 (unsigned long)(intervalMs / 1000), seqNo, (unsigned long)(now / 1000), transport->name());
   Serial.printf("  sensors: DS18B20=%s MPU6050=%s MAX30102=SYNTHETIC(no real sensor) temp_source=%s\n",
                 tempSensor.present() ? "present" : "MISSING", imu.ok() ? "present" : "MISSING", tempSynthetic ? "SYNTH" : "SENSOR");
@@ -241,6 +296,23 @@ static void handleCommand(String line, uint32_t now) {
   String arg = sp < 0 ? "" : line.substring(sp + 1); arg.trim();
   if (cmd == "HELP") printHelp();
   else if (cmd == "STATUS") printStatus(now);
+  else if (cmd == "NORMAL" || cmd == "WARNING" || cmd == "CRITICAL") {
+    patientProfile = cmd == "WARNING" ? rpm::PROFILE_WARNING :
+                     cmd == "CRITICAL" ? rpm::PROFILE_CRITICAL : rpm::PROFILE_NORMAL;
+    scenario = SC_NORMAL;
+    Serial.printf("OK profile=%s (applies to the next patient reading)\n", cmd.c_str());
+  } else if (cmd == "FALL") {
+    scenario = SC_NORMAL;
+    simulatedFallPending = true;
+    Serial.println("OK simulated fall queued for the next patient reading");
+  } else if (cmd == "SET_SAMPLE_INTERVAL") {
+    long v = arg.toInt();
+    if (arg.length() == 0 || v < 1 || v > 3600) Serial.println("ERR usage: SET_SAMPLE_INTERVAL <1..3600> seconds");
+    else {
+      patientSampleIntervalMs = (uint32_t)v * 1000UL;
+      Serial.printf("OK patient_sample_interval=%lds\n", v);
+    }
+  }
   else if (cmd == "SEND") { sendNow = true; Serial.println("OK sending now"); }
   else if (cmd == "SET_INTERVAL") {
     long v = arg.toInt();
@@ -256,6 +328,7 @@ static void handleCommand(String line, uint32_t now) {
     Serial.printf("OK temp_source=%s\n", arg.c_str());
   } else if (cmd == "SET_SCENARIO") {
     for (int i = 0; i < SC_COUNT; i++) if (arg == SC_NAMES[i]) {
+      if (i == SC_NORMAL) patientProfile = rpm::PROFILE_NORMAL;
       scenario = (Scenario)i; sendNow = true; Serial.printf("OK scenario=%s (sending now)\n", SC_NAMES[i]); return;
     }
     Serial.println("ERR unknown scenario. Valid: NORMAL LOW_SPO2 HIGH_HR HIGH_TEMP FALL SENSOR_ERROR");
@@ -274,7 +347,7 @@ static void pollSerial(uint32_t now) {
 void setup() {
   Serial.begin(115200);
   delay(300);
-  Serial.println("\nRPM patient node starting. MAX30102 is SYNTHETIC; radio is SERIAL_SIM (not LoRa).");
+  Serial.println("\nRPM patient node starting. HR/SpO2 are simulated; timestamp_ms is elapsed time since startup.");
   Wire.begin(PIN_SDA, PIN_SCL);
   tempSensor.begin();
   imu.begin();
@@ -292,6 +365,14 @@ void loop() {
     lastImuMs = now;
     float x, y, z;
     if (imu.readG(x, y, z) && fallDet.update(x, y, z, now)) { Serial.println("EVENT possible fall detected (MPU6050)"); sendNow = true; }
+  }
+
+  if (rpm::patientSampleDue(now, lastPatientSampleMs, patientSampleStarted, patientSampleIntervalMs)) {
+    patientSampleStarted = true;
+    lastPatientSampleMs = now;
+    rpm::PatientReadingSources sources{};
+    const rpm::PatientReading reading = readPatientData(now, sources);
+    printPatientData(reading, sources);
   }
 
   if (firstTx && now >= 3000) { sendNow = true; firstTx = false; }

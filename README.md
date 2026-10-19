@@ -92,14 +92,57 @@ curl -X POST -H "Authorization: Bearer demo-admin" localhost:5000/api/model/retr
 Authentication: `Authorization: Bearer <token>`. Doctor token for all endpoints except `/api/health`; **admin token only** for `/api/model/retrain`. Errors: `{"error":"msg","code":"E_XXX"}` (400/401/404/429/501/500). `POST /api/vitals` also accepts optional `seq`, `uptime`, `flags`, `synthetic`, `source`; `hr/spo2/temp` may be `null` only when the matching fault bit is set in `flags` (4 = HR/SpO2, 8 = temp).
 Differences from the report: extra `GET /api/patients`; `/api/model/retrain` returns **501** (retraining is offline, `ml/train_model.py`) unless `{"action":"reload"}`; only horizon 15 is allowed by default (`ALLOWED_HORIZONS`).
 
-## 7. Wokwi patient node (manual part)
-1. https://wokwi.com → *New Project* → **ESP32-S3** → *Arduino*.
-2. Replace `diagram.json` and `sketch.ino` with the contents of `wokwi/patient_node/` (the local sketch file is named `patient_node.ino` to satisfy Arduino CLI); add `telemetry.h`, `fall_detector.h`, and `patient_reading.h`, and replace `libraries.txt` (adds OneWire, DallasTemperature).
-3. If Wokwi reports an unknown part or pin, fix its name in `diagram.json` (see the warning in `docs/wiring.md`; I could not verify Wokwi names live).
-4. Press ▶. Serial Monitor shows one patient-reading JSON object per reading, plus `DBG {...}` and `LORA_TX_SIM seq=.. hex=..` lines (**simulation text, not LoRa**). The patient JSON timestamp is uptime, not UTC.
-5. Type commands in the Serial Monitor: `HELP`, `STATUS`, `SEND`, `SET_INTERVAL 10`, `SET_PATIENT 2`, `TEMP_SOURCE SYNTH` (DS18B20's Wokwi default is 24 °C → LOW_TEMP alert unless you set the slider to ~36.7 °C or use `SYNTH`), and `SET_SCENARIO NORMAL|LOW_SPO2|HIGH_HR|HIGH_TEMP|FALL|SENSOR_ERROR` (each sends immediately; LED/buzzer react).
-6. **Bridge (manual):** copy the `LORA_TX_SIM` lines into a file and run `python gateway_simulator.py --file lines.txt` (or `--stdin` and paste). Lines without `hex=` are ignored.
-The default transmit interval is the report's 60 s; use `SET_INTERVAL 10` for demos (and keep `VITALS_MIN_INTERVAL_S=0` on the API, otherwise packets <30 s apart get 429).
+## 7. Run the patient node in Wokwi or on an ESP32
+
+The Wokwi project is already configured in this repository: root `diagram.json` describes the ESP32-S3 DevKitC-1 circuit, and `wokwi.toml` points to the compiled firmware under `wokwi/patient_node/build/`. The circuit has a Wokwi DS18B20 and MPU6050, one red LED, and a buzzer. HR and SpO2 use deterministic software profiles; the `FALL` command is a one-record test event, not a real fall measurement. GPIO assignments are listed in `docs/wiring.md`.
+
+### Build and start the local Wokwi simulation (Windows)
+
+From the repository root in PowerShell:
+
+```powershell
+# Arduino CLI bundled with Arduino IDE on this machine, if it is not already on PATH:
+$env:Path = "$env:LOCALAPPDATA\Programs\Arduino IDE\resources\app\lib\backend\resources;$env:Path"
+.\scripts\build_esp32_wokwi.ps1
+```
+
+The build script targets `esp32:esp32:esp32s3` and writes the `.bin` and `.elf` files that `wokwi.toml` expects. It requires the ESP32 Arduino core and the `OneWire` and `DallasTemperature` libraries. If Arduino CLI is installed elsewhere, add its directory to `PATH` instead.
+
+1. Open the repository root (`remote-patient-monitoring`) as the VS Code folder. The installed **Wokwi Simulator** extension reads the root `wokwi.toml` and `diagram.json`.
+2. Build before the first run, then press **Ctrl+Shift+P**, choose **Wokwi: Start Simulator**, and start the simulation. If prompted, complete the extension's Wokwi license/trial setup.
+3. Open the Wokwi simulation's **Serial Monitor** and set its baud rate to **115200**. It prints a patient JSON record every **5 seconds** by default. `timestamp_ms` is elapsed milliseconds since boot (not wall-clock time); source fields distinguish synthetic values and unavailable sensors. `DBG {...}` and `LORA_TX_SIM ...` are diagnostic/serial simulations, not LoRa.
+4. Enter each command in the Serial Monitor's input and press **Enter**. Commands are case-insensitive; profile changes apply to the next patient reading:
+
+   | Command | Expected patient record / alert behavior |
+   |---|---|
+   | `help` | Lists available commands. |
+   | `normal` | 78 BPM and 98% SpO2; with valid sensors the red LED gives its brief heartbeat flash and the buzzer is silent. |
+   | `warning` | 105 BPM and 94% SpO2; these values are below the configured alert thresholds, so the normal LED heartbeat/buzzer-silent behavior remains. |
+   | `critical` | 135 BPM and 88% SpO2; the red LED stays on and the buzzer gives a short alert beep every 5 seconds. |
+   | `fall` | The next patient record reports `fall_status: "YES"` once; the red LED stays on and the buzzer beeps at 2.5 Hz for the fall alert. This software test does not validate physical fall detection. |
+
+The single red LED is on GPIO5; the buzzer is on GPIO6. A missing/invalid sensor can also raise an alert, so check the record's source fields if the indicators do not match the selected profile. `TEMP_SOURCE SYNTH` selects the profile's simulated temperature (36.6/37.5/38.9 C); the default temperature source is the simulated DS18B20.
+
+To change the reading interval, enter `SET_SAMPLE_INTERVAL 60` (valid range 1–3600 seconds); the default development interval is 5 seconds. This is separate from the telemetry simulation interval, changed with `SET_INTERVAL 10`. No gateway or LoRa radio is needed to view patient readings.
+
+To control the simulation from VS Code, use the Command Palette (`Ctrl+Shift+P`): **Wokwi: Pause Simulation** pauses it, **Wokwi: Resume Simulation** continues it, and **Wokwi: Restart Simulation** restarts the ESP32 from startup. These are the commands contributed by the installed Wokwi Simulator extension; it does not provide a separate stop command.
+
+### Use a physical ESP32 instead
+
+Connect the ESP32-S3 by USB, then find its port with:
+
+```powershell
+arduino-cli board list
+```
+
+Replace `COM3` below with the port shown (for example, `COM5`):
+
+```powershell
+arduino-cli upload --port COM3 --fqbn esp32:esp32:esp32s3 wokwi/patient_node
+arduino-cli monitor --port COM3 --config baudrate=115200
+```
+
+The monitor accepts the same serial commands. Close the monitor before disconnecting or reusing the port. No physical COM port was present during the last check in this environment.
 
 ## 8. Tests
 ```bash
