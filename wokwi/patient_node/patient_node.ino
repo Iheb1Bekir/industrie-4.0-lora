@@ -14,6 +14,7 @@
 #include <DallasTemperature.h>
 #include "telemetry.h"
 #include "fall_detector.h"
+#include "patient_reading.h"
 
 // ---------------- Configuration & pins ----------------
 static const uint16_t PATIENT_NUM = 1;               // -> "P001"
@@ -198,6 +199,19 @@ static void buildAndSend(uint32_t now) {
   Serial.printf("DBG {\"pid\":\"P%03u\",\"seq\":%u,\"hr\":%u,\"spo2\":%u,\"temp\":%.2f,\"flags\":%u,\"scenario\":\"%s\",\"uptime\":%lu,\"alert\":%d}\n",
                 t.pid, t.seq, t.hr, t.spo2, t.temp_x100 == rpm::TEMP_INVALID ? -999.0 : t.temp_x100 / 100.0,
                 t.flags, SC_NAMES[scenario], (unsigned long)t.uptime_s, (int)alert);
+  char patientId[5];
+  char timestamp[40];
+  snprintf(patientId, sizeof(patientId), "P%03u", t.pid);
+  snprintf(timestamp, sizeof(timestamp), "UPTIME+%lus (NOT UTC)", (unsigned long)t.uptime_s);
+  rpm::PatientReading reading{
+      patientId,
+      timestamp,
+      static_cast<int>(t.hr),
+      static_cast<float>(t.spo2),
+      t.temp_x100 == rpm::TEMP_INVALID ? 0.0f : t.temp_x100 / 100.0f,
+      fall};
+  const std::string patientJson = rpm::serializePatientReading(reading);
+  Serial.println(patientJson.c_str());
   bool ok = transport->send(buf, sizeof(buf), t.seq);
   if (!ok) Serial.println("ERR transmit failed (will retry next interval)");
   lastFlags = t.flags; lastHr = t.hr; lastSpo2 = t.spo2; lastTemp = t.temp_x100;

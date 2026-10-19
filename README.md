@@ -20,7 +20,7 @@ Details: `docs/architecture.md`. Packet layout: `gateway/telemetry.py` docstring
 ## 3. Directory tree
 ```
 ├── README.md  requirements.txt  .env.example  .gitignore
-├── wokwi/patient_node/        diagram.json patient_node.ino telemetry.h fall_detector.h libraries.txt README.md
+├── wokwi/patient_node/        diagram.json patient_node.ino telemetry.h fall_detector.h patient_reading.h libraries.txt README.md
 ├── wokwi/gateway_simulation/  gateway_simulator.py simulated_patients.py README.md
 ├── gateway/   app.py config.py database.py telemetry.py alerts.py prediction.py auth.py radio.py bridge.py maintenance.py README.md
 ├── dashboard/ templates/index.html  static/style.css  static/app.js
@@ -94,9 +94,9 @@ Differences from the report: extra `GET /api/patients`; `/api/model/retrain` ret
 
 ## 7. Wokwi patient node (manual part)
 1. https://wokwi.com → *New Project* → **ESP32-S3** → *Arduino*.
-2. Replace `diagram.json` and `sketch.ino` with the contents of `wokwi/patient_node/` (the local sketch file is named `patient_node.ino` to satisfy Arduino CLI); add `telemetry.h` and `fall_detector.h`, and replace `libraries.txt` (adds OneWire, DallasTemperature).
+2. Replace `diagram.json` and `sketch.ino` with the contents of `wokwi/patient_node/` (the local sketch file is named `patient_node.ino` to satisfy Arduino CLI); add `telemetry.h`, `fall_detector.h`, and `patient_reading.h`, and replace `libraries.txt` (adds OneWire, DallasTemperature).
 3. If Wokwi reports an unknown part or pin, fix its name in `diagram.json` (see the warning in `docs/wiring.md`; I could not verify Wokwi names live).
-4. Press ▶. Serial Monitor shows `DBG {...}` and `LORA_TX_SIM seq=.. hex=..` lines (**simulation text, not LoRa**).
+4. Press ▶. Serial Monitor shows one patient-reading JSON object per reading, plus `DBG {...}` and `LORA_TX_SIM seq=.. hex=..` lines (**simulation text, not LoRa**). The patient JSON timestamp is uptime, not UTC.
 5. Type commands in the Serial Monitor: `HELP`, `STATUS`, `SEND`, `SET_INTERVAL 10`, `SET_PATIENT 2`, `TEMP_SOURCE SYNTH` (DS18B20's Wokwi default is 24 °C → LOW_TEMP alert unless you set the slider to ~36.7 °C or use `SYNTH`), and `SET_SCENARIO NORMAL|LOW_SPO2|HIGH_HR|HIGH_TEMP|FALL|SENSOR_ERROR` (each sends immediately; LED/buzzer react).
 6. **Bridge (manual):** copy the `LORA_TX_SIM` lines into a file and run `python gateway_simulator.py --file lines.txt` (or `--stdin` and paste). Lines without `hex=` are ignored.
 The default transmit interval is the report's 60 s; use `SET_INTERVAL 10` for demos (and keep `VITALS_MIN_INTERVAL_S=0` on the API, otherwise packets <30 s apart get 429).
