@@ -1,0 +1,10 @@
+# Runtime / tests (Python 3.10+; developed and tested on 3.12)
+flask>=3.0            # REST API + dashboard hosting
+requests>=2.31        # (optional helper for scripts; the gateway itself uses urllib)
+numpy>=1.26           # time-series arrays
+scikit-learn>=1.4     # LinearRegression fallback predictor (report section 5.1)
+python-dotenv>=1.0    # optional: loads .env
+pytest>=8.0           # test runner
+# Optional, NOT installed by default:
+#   tflite-runtime   (Raspberry Pi) or tensorflow (training PC)  -> TFLite LSTM; no trained model ships with this project
+#   pyserial         (only if you later add a real serial source to the gateway)

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RPM Doctor Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>Remote Patient Monitoring</h1>
+  <form id="tokenForm" autocomplete="off">
+    <input id="token" type="password" placeholder="Doctor Bearer token" aria-label="Bearer token">
+    <button type="submit">Connect</button>
+  </form>
+</header>
+<div class="banner">Prototype. Values marked <b>SYNTHETIC</b> are simulated, not patient measurements. Alerts and risk levels use unvalidated prototype rules and must not guide treatment.</div>
+<div id="status" class="status" role="status">Enter the token to load data.</div>
+<main>
+  <aside><h2>Patients</h2><ul id="patients"></ul></aside>
+  <section id="detail" hidden>
+    <h2 id="pname"></h2>
+    <div id="fresh" class="muted"></div>
+    <div class="cards" id="cards"></div>
+    <div class="row">
+      <h3>Prediction</h3>
+      <label>Horizon <select id="horizon"></select></label>
+    </div>
+    <div id="prediction" class="panel"></div>
+    <h3>History (24 h)</h3>
+    <div class="charts">
+      <figure><figcaption>Heart rate (bpm)</figcaption><div id="c_hr"></div></figure>
+      <figure><figcaption>SpO2 (%)</figcaption><div id="c_spo2"></div></figure>
+      <figure><figcaption>Temperature (&deg;C)</figcaption><div id="c_temp"></div></figure>
+    </div>
+    <h3>Active alerts</h3>
+    <ul id="alerts" class="alerts"></ul>
+  </section>
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
