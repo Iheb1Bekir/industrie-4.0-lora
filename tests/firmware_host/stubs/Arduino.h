@@ -7,6 +7,9 @@
 #include <string>
 #define OUTPUT 1
 #define HIGH 1
+#define LOW 0
+static uint8_t stubLedValue = LOW;
+static int stubToneFrequency = 0;
 struct String {
   std::string s;
   String(const char* c = "") : s(c) {}
@@ -34,7 +37,7 @@ static SerialClass Serial;
 inline uint32_t millis() { return 0; }
 inline void delay(uint32_t) {}
 inline void pinMode(uint8_t, uint8_t) {}
-inline void digitalWrite(uint8_t, uint8_t) {}
+inline void digitalWrite(uint8_t, uint8_t value) { stubLedValue = value; }
 inline void ledcAttach(uint8_t, int, int) {}
-inline void ledcWriteTone(uint8_t, int) {}
+inline void ledcWriteTone(uint8_t, int frequency) { stubToneFrequency = frequency; }
 #define ESP_ARDUINO_VERSION_MAJOR 3

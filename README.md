@@ -116,12 +116,12 @@ The build script targets `esp32:esp32:esp32s3` and writes the `.bin` and `.elf` 
    | Command | Expected patient record / alert behavior |
    |---|---|
    | `help` | Lists available commands. |
-   | `normal` | 78 BPM and 98% SpO2; with valid sensors the red LED gives its brief heartbeat flash and the buzzer is silent. |
-   | `warning` | 105 BPM and 94% SpO2; these values are below the configured alert thresholds, so the normal LED heartbeat/buzzer-silent behavior remains. |
-   | `critical` | 135 BPM and 88% SpO2; the red LED stays on and the buzzer gives a short alert beep every 5 seconds. |
-   | `fall` | The next patient record reports `fall_status: "YES"` once; the red LED stays on and the buzzer beeps at 2.5 Hz for the fall alert. This software test does not validate physical fall detection. |
+   | `normal` | 78 BPM and 98% SpO2; with valid sensors the red LED and buzzer stay off. |
+   | `warning` | 105 BPM and 94% SpO2; the red LED blinks at a medium rate and the buzzer stays off. |
+   | `critical` | 135 BPM and 88% SpO2; the red LED blinks quickly and the buzzer pulses. |
+   | `fall` | The next patient record reports `fall_status: "YES"` once; the red LED blinks quickly and the buzzer pulses. This software test does not validate physical fall detection. |
 
-The single red LED is on GPIO5; the buzzer is on GPIO6. A missing/invalid sensor can also raise an alert, so check the record's source fields if the indicators do not match the selected profile. `TEMP_SOURCE SYNTH` selects the profile's simulated temperature (36.6/37.5/38.9 C); the default temperature source is the simulated DS18B20.
+The single red LED is on GPIO5; the buzzer is on GPIO6. Local alerts are NORMAL (outputs off), BORDERLINE (medium LED blink, no sound), or CRITICAL (fast LED blink and pulsed buzzer). Borderline thresholds are HR >100 BPM, SpO2 <95%, or temperature >=37.5 C. Critical thresholds are HR >120 BPM, SpO2 <92%, temperature >38.0 C, a fall, or a sensor fault. These prototype thresholds are not clinically validated; a single-color LED cannot distinguish multiple colors. A missing/invalid sensor can raise a critical alert, so check the record's source fields if the indicators do not match the selected profile. `TEMP_SOURCE SYNTH` selects the profile's simulated temperature (36.6/37.5/38.9 C); the default temperature source is the simulated DS18B20.
 
 To change the reading interval, enter `SET_SAMPLE_INTERVAL 60` (valid range 1–3600 seconds); the default development interval is 5 seconds. This is separate from the telemetry simulation interval, changed with `SET_INTERVAL 10`. No gateway or LoRa radio is needed to view patient readings.
 

@@ -1,5 +1,4 @@
 # Patient node (Wokwi)
-
 Files: `diagram.json`, `patient_node.ino`, `telemetry.h`, `fall_detector.h`, `patient_reading.h`, `libraries.txt`. Setup and wiring: root `README.md` §7 and `docs/wiring.md`.
 
 The circuit uses an ESP32-S3 DevKitC-1 with a Wokwi-simulated DS18B20, MPU6050, LED, and buzzer. There is no MAX30102 in the circuit: heart rate and SpO2 use deterministic software test profiles. The serial `LORA_TX_SIM` output is a binary telemetry test path, not an over-the-air LoRa transmission.
@@ -30,6 +29,12 @@ Example (illustrative):
 
 The development sampling interval defaults to 5 seconds. Change it at runtime with `SET_SAMPLE_INTERVAL <1..3600>`; the deployment specification's 60-second sampling interval can be selected with `SET_SAMPLE_INTERVAL 60`. This reading interval is separate from the existing telemetry transmit interval (`SET_INTERVAL`, default 60 seconds). Both use non-blocking `millis()` scheduling.
 
+## Local alerts and motion detection
+
+The single active-HIGH red LED is on GPIO5 and the buzzer is on GPIO6. Normal readings leave both off; borderline readings blink the LED at a medium rate without sound; critical readings blink it quickly and pulse the buzzer. Prototype thresholds are HR >100 BPM or SpO2 <95% for borderline, HR >120 BPM or SpO2 <92% for critical, and temperature >=37.5 C for borderline or >38.0 C for critical. A fall or sensor fault is critical. These thresholds are unvalidated; one red LED cannot represent separate green/yellow/red colors.
+
+The MPU6050 is checked at I2C addresses 0x68 and 0x69 and sampled for acceleration and rotation. Its prototype heuristic latches fall/sudden-motion events for 10 seconds after free-fall followed by impact, abrupt acceleration change, or rapid rotation. Use `SET_SCENARIO FALL` to exercise the scenario; it is not a validated fall detector.
+
 ## Test commands
 
 Commands are case-insensitive. A newly selected profile is used by the next reading:
@@ -52,3 +57,5 @@ With Arduino CLI, the ESP32 core, OneWire, and DallasTemperature installed, buil
 ```
 
 The target is `esp32:esp32:esp32s3` (ESP32-S3 DevKitC-1). In Wokwi, load the files under `wokwi/patient_node/`, including `patient_reading.h`, start the simulation, and open the Serial Monitor at 115200 baud. Use the commands above and verify one JSON object per patient sample. The 16-byte telemetry packet is still transmitted only through the pre-existing serial simulation path; this task adds no LoRa behavior.
+
+The serial output also includes `DBG {...}` diagnostics and `LORA_TX_SIM` 16-byte packet records. This is a serial test transport, not an over-the-air LoRa transmission. `tests/firmware_host/` covers packet encoding, fall detection, sketch syntax, and local alert outputs.
