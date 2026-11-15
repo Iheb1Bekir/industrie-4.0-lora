@@ -19,12 +19,22 @@ class DoctorApp : public cSimpleModule
     int invalidPackets = 0;
     int doctorId = 1;
 
+    cOutVector patientIdVector;
+    cOutVector sequenceNumberVector;
+    cOutVector measurementTimestampVector;
+    cOutVector heartRateVector;
+    cOutVector spO2Vector;
+    cOutVector temperatureVector;
+    cOutVector fallDetectedVector;
+    cOutVector alertLevelVector;
+    cOutVector hopCountVector;
+
     int numInitStages() const override { return inet::NUM_INIT_STAGES; }
     void initialize(int stage) override;
     void handleMessage(cMessage *msg) override;
     void finish() override;
 
-    void processIncomingPacket(Packet *packet);
+    virtual void processIncomingPacket(Packet *packet);
 
   public:
     DoctorApp() {}

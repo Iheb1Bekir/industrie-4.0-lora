@@ -24,6 +24,14 @@ module PatientNode
         LoRaNic: RPMLoRaNic {
             parameters:
                 mac.typename = "rpm_lora_research.src.mac.RPMLoRaMac";
+                radio.centerFrequency = 868MHz;
+                radio.bandwidth = 125kHz;
+                radio.transmitter.centerFrequency = 868MHz;
+                radio.transmitter.bandwidth = 125kHz;
+                radio.receiver.centerFrequency = 868MHz;
+                radio.receiver.bandwidth = 125kHz;
+                radio.receiver.sensitivity = -137dBm;
+                radio.transmitter.power = 14dBm;
                 @display("p=150,180");
         }
         app: PatientApp {

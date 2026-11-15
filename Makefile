@@ -31,7 +31,10 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/src/doctor/DoctorApp.o $O/src/mac/RPMLoRaMac.o $O/src/patient/PatientApp.o $O/src/messages/RPMMeasurement_m.o
+OBJS = $O/src/doctor/DoctorApp.o $O/src/doctor/DistributedDoctorApp.o \
+    $O/src/mac/RPMLoRaMac.o $O/src/mac/RPMRoutingLoRaMac.o $O/src/mac/RPMRelayMac.o $O/src/mac/RPMDoctorMac.o $O/src/mac/RPMPatientRadio.o \
+    $O/src/patient/PatientApp.o $O/src/patient/DistributedPatientApp.o $O/src/relay/RPMRelayApp.o \
+    $O/src/messages/RPMMeasurement_m.o
 
 # Message files
 MSGFILES = \

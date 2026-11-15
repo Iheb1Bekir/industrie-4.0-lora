@@ -14,7 +14,7 @@ module RPMLoRaNic extends WirelessInterface
         radio.transmitter.headerLength = 0B;
         radio.receiver.typename = "LoRaReceiver";
 
-        mac.typename = "rpm_lora_research.src.mac.RPMLoRaMac";
+        mac.typename = default("rpm_lora_research.src.mac.RPMLoRaMac");
 
         queue.typename = default("DropTailQueue");
         queue.packetCapacity = default(-1);
