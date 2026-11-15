@@ -1,0 +1,27 @@
+# Build artifacts
+out/
+*.o
+*.so
+*.a
+*.d
+*.gcda
+*.gcno
+
+# Generated simulation results
+simulations/results/
+simulations/analysis/
+
+# Temporary files
+*.tmp
+*.log
+*~
+
+# IDE metadata
+.settings/
+.project
+.cproject
+
+# Local generated files
+/120
+/like
+/RPM_LoRa_Research
