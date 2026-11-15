@@ -165,6 +165,8 @@ async function logout() {
 // ---------------------------------------------------------------- router
 function defaultRoute() { return state.me.role === 'caregiver' ? 'home' : 'overview'; }
 
+let routeGen = 0;   // each navigation gets a number; a view finishing after a newer navigation is discarded
+
 async function route() {
   if (!state.me) return;
   const [name0, arg] = location.hash.replace(/^#\//, '').split('/');
@@ -174,17 +176,27 @@ async function route() {
   const entry = NAV.find((n) => n[0] === navName);
   if (!ROUTES[name] || (entry && !can(entry[3]))) { location.hash = '#/' + defaultRoute(); return; }
   if (state.me.must_change_password && name !== 'account') { location.hash = '#/account'; return; }
-  current?.destroy?.();
+  const gen = ++routeGen;
+  try { current?.destroy?.(); } catch (e) { console.error(e); }
+  current = null;
   $$('.nav a').forEach((a) => a.classList.toggle('active', a.dataset.nav === navName));
   $('#pop').innerHTML = ''; $('#pop').dataset.kind = '';
-  const view = $('#view');
-  view.innerHTML = '<div class="empty">Loading…</div>';
+  // Each view renders into its OWN container. If the user navigates away while it is still loading, that
+  // container is detached, so a late render or a leftover timer can never repaint over the new page.
+  const root = document.createElement('div');
+  root.innerHTML = '<div class="empty">Loading…</div>';
+  $('#view').replaceChildren(root);
+  let instance = null;
   try {
-    current = await ROUTES[name](view, arg, { setTitle: (t) => { $('#title').textContent = t; document.title = `${t} · RPM`; } });
+    instance = await ROUTES[name](root, arg, { setTitle: (t) => { if (gen === routeGen) { $('#title').textContent = t; document.title = `${t} · RPM`; } } });
   } catch (e) {
-    current = null;
-    view.innerHTML = `<div class="card"><div class="body"><div class="note crit">${esc(e.message)}</div></div></div>`;
+    if (gen === routeGen) root.innerHTML = `<div class="card"><div class="body"><div class="note crit">${esc(e.message)}</div></div></div>`;
   }
+  if (gen !== routeGen) {           // superseded while loading: stop its timers/listeners and keep the newer page
+    try { instance?.destroy?.(); } catch (e) { console.error(e); }
+    return;
+  }
+  current = instance;
 }
 
 // ---------------------------------------------------------------- real-time stream
@@ -221,8 +233,9 @@ async function start(me) {
   shell();
   connectStream();
   refreshBell(); refreshAlertCount();
+  // Setting the hash fires `hashchange`, which already calls route(): never start a second, parallel navigation.
   if (!location.hash || location.hash === '#/login') location.hash = '#/' + defaultRoute();
-  await route();
+  else await route();
 }
 
 window.addEventListener('hashchange', route);
