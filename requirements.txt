@@ -1,10 +1,15 @@
-# Runtime / tests (Python 3.10+; developed and tested on 3.12)
-flask>=3.0            # REST API + dashboard hosting
-requests>=2.31        # (optional helper for scripts; the gateway itself uses urllib)
-numpy>=1.26           # time-series arrays
-scikit-learn>=1.4     # LinearRegression fallback predictor (report section 5.1)
+# Python 3.11+ (developed on 3.13; the Raspberry Pi OS "Bookworm" Python 3.11 is supported - tomllib is required)
+flask>=3.0            # REST API, static web app, Server-Sent Events
+werkzeug>=3.0         # scrypt password hashing
+cryptography>=42      # AES-256-GCM wrapping of device keys and TOTP secrets
+waitress>=3.0         # production WSGI server (Windows + Raspberry Pi)
+numpy>=1.26           # features / model runtime
+scikit-learn>=1.4     # model training + local inference (the deployed artifact records its exact version)
+joblib>=1.3           # model artifact format
 python-dotenv>=1.0    # optional: loads .env
+requests>=2.31        # legacy helper scripts
 pytest>=8.0           # test runner
-# Optional, NOT installed by default:
-#   tflite-runtime   (Raspberry Pi) or tensorflow (training PC)  -> TFLite LSTM; no trained model ships with this project
-#   pyserial         (only if you later add a real serial source to the gateway)
+# Raspberry Pi gateway service only (install on the Pi, not needed for simulation):
+#   spidev            SPI access to the SX127x radio
+#   gpiozero lgpio    RESET line on the Raspberry Pi 5
+# Legacy (pre-MVP LSTM path, untested, optional): tflite-runtime / tensorflow

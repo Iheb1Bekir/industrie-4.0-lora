@@ -41,6 +41,21 @@ def H(): return {"Authorization": f"Bearer {DOC}"}
 def HA(): return {"Authorization": f"Bearer {ADM}"}
 
 
+@pytest.fixture
+def v2(tmp_path):
+    """Platform v2 server with a fake clock and the three roles (see tests/v2_harness.py)."""
+    from v2_harness import V2
+    return V2(tmp_path)
+
+
+@pytest.fixture
+def hw(v2):
+    """v2 switched to HARDWARE mode, with an administrator doctor client in `hw.doc`."""
+    v2.svc.store.set_setting("operating_mode", "hardware")
+    v2.doc = v2.login("doc")
+    return v2
+
+
 def vitals(clock, **kw):
     d = {"pid": "P001", "hr": 78, "spo2": 97, "temp": 36.7, "fall": 0, "ts": int(clock())}
     d.update(kw); return d

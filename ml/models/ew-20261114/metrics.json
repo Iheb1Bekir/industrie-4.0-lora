@@ -1,0 +1,382 @@
+{
+  "version": "ew-20261114",
+  "selected": "hist_gradient_boosting",
+  "generated_at": "2026-11-14T15:21:13Z",
+  "horizon_s": 600,
+  "models": {
+    "logistic_regression": {
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "imputer": "median",
+        "scaler": "standard"
+      },
+      "deployable": true,
+      "thresholds": {
+        "high": 0.7984981705929857,
+        "medium": 0.5303405632192745
+      },
+      "validation": {
+        "n": 120212,
+        "positives": 2133,
+        "prevalence": 0.01774,
+        "threshold": 0.7984981705929857,
+        "accuracy": 0.9717249525837687,
+        "precision": 0.3440886699507389,
+        "recall": 0.6549460853258322,
+        "sensitivity": 0.6549460853258322,
+        "specificity": 0.9774473022298631,
+        "f1": 0.45115452930728245,
+        "f2": 0.5547172808132147,
+        "fpr": 0.022552697770136944,
+        "fnr": 0.34505391467416785,
+        "confusion_matrix": {
+          "tn": 115416,
+          "fp": 2663,
+          "fn": 736,
+          "tp": 1397
+        },
+        "roc_auc": 0.9160291372784596,
+        "pr_auc": 0.4750516816124966,
+        "brier_raw": 0.09234659018147397,
+        "ece_raw": 0.2249977654383555
+      },
+      "test": {
+        "n": 116861,
+        "positives": 1816,
+        "prevalence": 0.01554,
+        "threshold": 0.7984981705929857,
+        "accuracy": 0.9726683838064025,
+        "precision": 0.3070028011204482,
+        "recall": 0.6035242290748899,
+        "sensitivity": 0.6035242290748899,
+        "specificity": 0.978495371376418,
+        "f1": 0.40698106201262535,
+        "f2": 0.5058150267675835,
+        "fpr": 0.021504628623582076,
+        "fnr": 0.3964757709251101,
+        "confusion_matrix": {
+          "tn": 112571,
+          "fp": 2474,
+          "fn": 720,
+          "tp": 1096
+        },
+        "roc_auc": 0.8920846094891427,
+        "pr_auc": 0.41278796285694636,
+        "brier_raw": 0.09321002347063925,
+        "ece_raw": 0.22438885454715346,
+        "brier_calibrated": 0.011368019585047578,
+        "ece_calibrated": 0.0006264389024955607,
+        "events": {
+          "events": 97,
+          "detected": 91,
+          "event_recall": 0.9381,
+          "median_lead_s": 510.0,
+          "p25_lead_s": 360.0,
+          "false_alarm_episodes": 419,
+          "false_alarms_per_patient_day": 10.491
+        }
+      },
+      "fit_seconds": 3.39,
+      "inference_latency_ms": 6.379
+    },
+    "random_forest": {
+      "params": {
+        "n_estimators": 200,
+        "max_depth": 12,
+        "min_samples_leaf": 5,
+        "class_weight": "balanced_subsample"
+      },
+      "deployable": true,
+      "thresholds": {
+        "high": 0.4387868200612642,
+        "medium": 0.23787123004210917
+      },
+      "validation": {
+        "n": 120212,
+        "positives": 2133,
+        "prevalence": 0.01774,
+        "threshold": 0.4387868200612642,
+        "accuracy": 0.9789039363790637,
+        "precision": 0.44221393748207627,
+        "recall": 0.7229254571026723,
+        "sensitivity": 0.7229254571026723,
+        "specificity": 0.9835279770323259,
+        "f1": 0.5487544483985765,
+        "f2": 0.6414843164988768,
+        "fpr": 0.016472022967674183,
+        "fnr": 0.2770745428973277,
+        "confusion_matrix": {
+          "tn": 116134,
+          "fp": 1945,
+          "fn": 591,
+          "tp": 1542
+        },
+        "roc_auc": 0.9061513391510869,
+        "pr_auc": 0.5310085211220599,
+        "brier_raw": 0.03377239707252674,
+        "ece_raw": 0.13700082095753938
+      },
+      "test": {
+        "n": 116861,
+        "positives": 1816,
+        "prevalence": 0.01554,
+        "threshold": 0.4387868200612642,
+        "accuracy": 0.9803783982680279,
+        "precision": 0.4199932908419993,
+        "recall": 0.6894273127753304,
+        "sensitivity": 0.6894273127753304,
+        "specificity": 0.9849710982658959,
+        "f1": 0.5219929122368147,
+        "f2": 0.6110297706198146,
+        "fpr": 0.015028901734104046,
+        "fnr": 0.31057268722466963,
+        "confusion_matrix": {
+          "tn": 113316,
+          "fp": 1729,
+          "fn": 564,
+          "tp": 1252
+        },
+        "roc_auc": 0.8974471897895536,
+        "pr_auc": 0.5431776263979736,
+        "brier_raw": 0.03355791522010374,
+        "ece_raw": 0.139243700356768,
+        "brier_calibrated": 0.009703146836429713,
+        "ece_calibrated": 0.0012501379152790263,
+        "events": {
+          "events": 97,
+          "detected": 92,
+          "event_recall": 0.9485,
+          "median_lead_s": 532.5,
+          "p25_lead_s": 382.5,
+          "false_alarm_episodes": 282,
+          "false_alarms_per_patient_day": 7.06
+        }
+      },
+      "fit_seconds": 35.02,
+      "inference_latency_ms": 47.239
+    },
+    "hist_gradient_boosting": {
+      "params": {
+        "max_iter": 300,
+        "learning_rate": 0.06,
+        "max_depth": 6,
+        "l2_regularization": 1.0,
+        "class_weight": "balanced",
+        "native_missing_values": true
+      },
+      "deployable": true,
+      "thresholds": {
+        "high": 0.6448115846976289,
+        "medium": 0.23101624314856795
+      },
+      "validation": {
+        "n": 120212,
+        "positives": 2133,
+        "prevalence": 0.01774,
+        "threshold": 0.6448115846976289,
+        "accuracy": 0.9802765114963564,
+        "precision": 0.46378575776019476,
+        "recall": 0.7144866385372715,
+        "sensitivity": 0.7144866385372715,
+        "specificity": 0.985077786905377,
+        "f1": 0.5624653995202067,
+        "f2": 0.6447791504484685,
+        "fpr": 0.01492221309462309,
+        "fnr": 0.28551336146272854,
+        "confusion_matrix": {
+          "tn": 116317,
+          "fp": 1762,
+          "fn": 609,
+          "tp": 1524
+        },
+        "roc_auc": 0.9060918582852032,
+        "pr_auc": 0.5764600836072864,
+        "brier_raw": 0.02645712325750953,
+        "ece_raw": 0.07187738521463907
+      },
+      "test": {
+        "n": 116861,
+        "positives": 1816,
+        "prevalence": 0.01554,
+        "threshold": 0.6448115846976289,
+        "accuracy": 0.9812769016181617,
+        "precision": 0.4333810888252149,
+        "recall": 0.6662995594713657,
+        "sensitivity": 0.6662995594713657,
+        "specificity": 0.9862488591420748,
+        "f1": 0.5251736111111112,
+        "f2": 0.6016308671439935,
+        "fpr": 0.01375114085792516,
+        "fnr": 0.33370044052863435,
+        "confusion_matrix": {
+          "tn": 113463,
+          "fp": 1582,
+          "fn": 606,
+          "tp": 1210
+        },
+        "roc_auc": 0.8860770340202062,
+        "pr_auc": 0.5432326500575065,
+        "brier_raw": 0.026433266800018076,
+        "ece_raw": 0.07420470509411337,
+        "brier_calibrated": 0.00953507741003942,
+        "ece_calibrated": 0.000778490223988342,
+        "events": {
+          "events": 97,
+          "detected": 92,
+          "event_recall": 0.9485,
+          "median_lead_s": 510.0,
+          "p25_lead_s": 360.0,
+          "false_alarm_episodes": 282,
+          "false_alarms_per_patient_day": 7.06
+        }
+      },
+      "fit_seconds": 7.58,
+      "inference_latency_ms": 4.761
+    },
+    "isolation_forest": {
+      "params": {
+        "n_estimators": 200,
+        "unsupervised": true,
+        "note": "anomaly score, labels never used for fitting"
+      },
+      "deployable": false,
+      "thresholds": {
+        "high": 0.6616138532279028,
+        "medium": 0.4004883548614463
+      },
+      "validation": {
+        "n": 120212,
+        "positives": 2133,
+        "prevalence": 0.01774,
+        "threshold": 0.6616138532279028,
+        "accuracy": 0.9625162213422953,
+        "precision": 0.2615075376884422,
+        "recall": 0.6099390529770277,
+        "sensitivity": 0.6099390529770277,
+        "specificity": 0.9688852378492365,
+        "f1": 0.36606640405177265,
+        "f2": 0.48160213222773374,
+        "fpr": 0.031114762150763472,
+        "fnr": 0.39006094702297234,
+        "confusion_matrix": {
+          "tn": 114405,
+          "fp": 3674,
+          "fn": 832,
+          "tp": 1301
+        },
+        "roc_auc": 0.8710487305679048,
+        "pr_auc": 0.2735124428819273,
+        "brier_raw": 0.10744973702695422,
+        "ece_raw": 0.2699383541781256
+      },
+      "test": {
+        "n": 116861,
+        "positives": 1816,
+        "prevalence": 0.01554,
+        "threshold": 0.6616138532279028,
+        "accuracy": 0.9694851147944995,
+        "precision": 0.27701325178389397,
+        "recall": 0.598568281938326,
+        "sensitivity": 0.598568281938326,
+        "specificity": 0.9753400843148333,
+        "f1": 0.37874564459930316,
+        "f2": 0.48578834465498744,
+        "fpr": 0.024659915685166674,
+        "fnr": 0.401431718061674,
+        "confusion_matrix": {
+          "tn": 112208,
+          "fp": 2837,
+          "fn": 729,
+          "tp": 1087
+        },
+        "roc_auc": 0.8583177397735382,
+        "pr_auc": 0.2585530919847092,
+        "brier_raw": 0.09839328170887911,
+        "ece_raw": 0.2578781630374896,
+        "brier_calibrated": 0.01264666617119999,
+        "ece_calibrated": 0.0020096730731265526,
+        "events": {
+          "events": 97,
+          "detected": 92,
+          "event_recall": 0.9485,
+          "median_lead_s": 480.0,
+          "p25_lead_s": 300.0,
+          "false_alarm_episodes": 355,
+          "false_alarms_per_patient_day": 8.888
+        }
+      }
+    },
+    "trend_rule_baseline": {
+      "params": {
+        "rule": "linear extrapolation of the current trend to the threshold (no learning)"
+      },
+      "deployable": false,
+      "thresholds": {
+        "high": 0.8834141274238232,
+        "medium": 0.7713623884694599
+      },
+      "validation": {
+        "n": 120212,
+        "positives": 2133,
+        "prevalence": 0.01774,
+        "threshold": 0.8834141274238232,
+        "accuracy": 0.9664925298639071,
+        "precision": 0.29189545354711177,
+        "recall": 0.6230661040787623,
+        "sensitivity": 0.6230661040787623,
+        "specificity": 0.9726962457337884,
+        "f1": 0.39754711337122345,
+        "f2": 0.5078333970194879,
+        "fpr": 0.027303754266211604,
+        "fnr": 0.3769338959212377,
+        "confusion_matrix": {
+          "tn": 114855,
+          "fp": 3224,
+          "fn": 804,
+          "tp": 1329
+        },
+        "roc_auc": 0.8910949000440149,
+        "pr_auc": 0.4354793524646915,
+        "brier_raw": 0.2586030984973006,
+        "ece_raw": 0.3862466387985463
+      },
+      "test": {
+        "n": 116861,
+        "positives": 1816,
+        "prevalence": 0.01554,
+        "threshold": 0.8834141274238232,
+        "accuracy": 0.964667425402829,
+        "precision": 0.2414486921529175,
+        "recall": 0.5947136563876652,
+        "sensitivity": 0.5947136563876652,
+        "specificity": 0.9705071928375852,
+        "f1": 0.34345682938463984,
+        "f2": 0.4600834966345743,
+        "fpr": 0.029492807162414706,
+        "fnr": 0.4052863436123348,
+        "confusion_matrix": {
+          "tn": 111652,
+          "fp": 3393,
+          "fn": 736,
+          "tp": 1080
+        },
+        "roc_auc": 0.8770679874739686,
+        "pr_auc": 0.37173852679962566,
+        "brier_raw": 0.2533799430905049,
+        "ece_raw": 0.3790292313578368,
+        "brier_calibrated": 0.01163792409054539,
+        "ece_calibrated": 0.0021015588880663773,
+        "events": {
+          "events": 97,
+          "detected": 94,
+          "event_recall": 0.9691,
+          "median_lead_s": 472.5,
+          "p25_lead_s": 337.5,
+          "false_alarm_episodes": 862,
+          "false_alarms_per_patient_day": 21.582
+        }
+      }
+    }
+  }
+}

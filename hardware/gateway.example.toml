@@ -1,0 +1,24 @@
+# Raspberry Pi 5 gateway - central hardware configuration.  Copy to hardware/gateway.toml and edit.
+# STATUS: HARDWARE PENDING. Values below are the documented wiring, not a verified installation.
+
+[radio]
+adapter = "sx127x"            # "sx127x" (SX1276/77/78/79, RFM95/96/98) | "stdin" (bench test, no radio)
+# REQUIRED, no default. Must equal RPM_LORA_FREQUENCY_MHZ in the node firmware and be legal for your location
+# and compatible with your module's band (e.g. an SX1278 433 MHz module cannot operate at 868 MHz).
+# frequency_hz = 868100000
+bandwidth_hz = 125000
+spreading_factor = 7
+coding_rate = 5               # 4/5
+sync_word = 0x12              # private network; this is NOT LoRaWAN
+preamble = 8
+spi_bus = 0                   # /dev/spidev0.0  (enable SPI: sudo raspi-config -> Interface Options -> SPI)
+spi_device = 0                # CE0 = BCM 8
+spi_speed_hz = 1000000
+reset_gpio = 25               # BCM numbering; remove the line if RESET is not wired
+# Wiring (BCM): MOSI 10, MISO 9, SCK 11, NSS 8 (CE0), RESET 25, 3V3, GND.  DIO0 is not required (IRQ flags are polled).
+
+[api]
+url = "http://127.0.0.1:8000" # the platform server on the same Pi
+
+[spool]
+path = "data/gateway_spool.sqlite3"   # store-and-forward queue used while the API is unreachable

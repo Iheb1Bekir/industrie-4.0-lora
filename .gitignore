@@ -8,3 +8,9 @@ data/exports/
 ml/artifacts/
 wokwi/patient_node/build/
 *.zip
+# --- platform v2 ---
+data/*
+!data/.gitkeep
+ml/data/
+.claude/
+*.bundle

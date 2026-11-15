@@ -1,0 +1,44 @@
+{
+  "label": "circular-mixed-route-r6",
+  "source": "RPM_LoRa_Research/simulations/results/circular-deployment-validation-20261108-r6-default-coverage-aware/DistributedRPM-#0.sca",
+  "imported_at": "2026-11-14 19:50:16Z",
+  "tool": "OMNeT++ 6.5.0 / INET 4.6.0 / FLoRa 1.3.2",
+  "sim_time": "120s",
+  "patients": 20,
+  "relays": 3,
+  "generated": 80,
+  "doctor_valid": 79,
+  "direct": 64,
+  "relay_assisted": 15,
+  "pdr": 0.9875,
+  "duplicates": 0,
+  "alerts": {
+    "normal": 76,
+    "warning": 1,
+    "critical": 2,
+    "fall": 1
+  },
+  "relay_stats": [
+    {
+      "index": 0,
+      "received": 7,
+      "forwarded": 7,
+      "dropped": 0,
+      "duplicates": 0
+    },
+    {
+      "index": 1,
+      "received": 11,
+      "forwarded": 11,
+      "dropped": 0,
+      "duplicates": 0
+    },
+    {
+      "index": 2,
+      "received": 15,
+      "forwarded": 15,
+      "dropped": 0,
+      "duplicates": 0
+    }
+  ]
+}

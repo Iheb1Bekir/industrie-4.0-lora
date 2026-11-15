@@ -1,0 +1,4 @@
+RadioLib
+OneWire
+DallasTemperature
+# SparkFun MAX3010x Pulse and Proximity Sensor Library   (only when RPM_USE_MAX30102 = 1)
