@@ -17,3 +17,5 @@ ml/data/
 
 # LaTeX build output of the scientific report (the final PDF is report/main.pdf)
 report/build/
+# PNG checks written by presentation/build_deck.ps1
+presentation/renders/
