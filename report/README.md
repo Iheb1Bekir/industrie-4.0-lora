@@ -1,7 +1,9 @@
 # Scientific report — LoRa-enabled remote patient monitoring
 
-IEEE-style conference paper (IEEEtran, **7 pages including references**) describing the project as it actually
-stands: what is implemented and tested, what was simulated, what was measured on the bench, and what is still pending.
+Single-column technical report (A4, 10 pt Times, **7 pages including references**, bullet style, no two-column page
+split) describing the project as it actually stands: what is implemented and tested, what was simulated, what was
+measured on the bench, and what is still pending. The layout rules are in [LAYOUT_PROMPT.md](LAYOUT_PROMPT.md); the
+earlier two-column IEEE version is in the git history (commit `513c323`).
 
 | File | Content |
 |---|---|
@@ -19,7 +21,8 @@ stands: what is implemented and tested, what was simulated, what was measured on
 
 **Overleaf** — zip the `report/` folder (or use the prepared `RPM_LoRa_report_overleaf.zip` if present), then
 *New Project → Upload Project*. The default compiler (pdfLaTeX) works; the document uses only standard TeX Live
-packages (IEEEtran, TikZ/pgfplots 1.18, subfig, booktabs, tabularx, hyperref).
+packages (article, mathptmx, TikZ/pgfplots 1.18, caption/subcaption, booktabs, tabularx, enumitem, titlesec, fancyhdr,
+lastpage, placeins, flafter, hyperref); the bibliography style is IEEEtran.
 
 **Locally**
 
@@ -31,8 +34,9 @@ tectonic main.tex
 latexmk -pdf main.tex
 ```
 
-`main.tex` loads `fontenc` T1 so that XeTeX (Tectonic) and pdfLaTeX (Overleaf) use the same Times fonts and give the
-same page count. After any edit, check that the PDF is still **at most 7 pages**.
+`main.tex` loads `fontenc` T1 and `mathptmx` so that XeTeX (Tectonic) and pdfLaTeX (Overleaf) use the same Times
+fonts and give the same page count. After any edit, check that the PDF is still **at most 7 pages** and that no
+paragraph grows beyond about three lines.
 
 ## Replacing the user-supplied images
 
@@ -75,6 +79,6 @@ patient view), capture the pages and stop the simulation again. All patients sho
 ## Honesty rules applied
 
 * Simulation, bench observation, software tests, analytical estimates and model evaluation are reported separately
-  (Table VII of the paper).
+  (Table 1, “results at a glance”, on page 1).
 * No physiological data from people: all vital-sign values are synthetic or simulated.
 * No clinical validation or regulatory compliance is claimed; open items are marked *pending*.

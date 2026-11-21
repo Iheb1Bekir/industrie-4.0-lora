@@ -6,12 +6,12 @@
   xlabel={Relay hops traversed (hopCount)}, ylabel={Delay (ms)},
   xtick={0,1,2,3}, enlarge x limits=0.17, ymajorgrids, grid style={black!12},
   tick label style={font=\scriptsize}, label style={font=\scriptsize},
-  legend style={font=\tiny, at={(0.01,0.98)}, anchor=north west, draw=none, fill=none, row sep=-1pt},
+  legend style={font=\scriptsize, at={(0.5,1.03)}, anchor=south, draw=none, fill=none, legend columns=2, column sep=6pt},
   legend cell align=left,
   nodes near coords, every node near coord/.append style={font=\tiny, rotate=90, anchor=west, /pgf/number format/fixed, /pgf/number format/precision=1},
 ]
 \addplot[fill=swc!65, draw=swc] table[x=hop, y=sim_ms] {figures/data/sim_delay_summary.dat};
 \addplot[fill=hwc!40, draw=hwc] table[x=hop, y=analytic34_ms] {figures/data/sim_delay_summary.dat};
-\legend{{simulated (FLoRa airtime model)}, {analytical, 34-B v2 frame, Eq.~(\ref{eq:toa})}}
+\legend{{simulated (FLoRa model)}, {analytical, 34-B frame}}
 \end{axis}
 \end{tikzpicture}
