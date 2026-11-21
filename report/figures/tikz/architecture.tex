@@ -1,0 +1,62 @@
+% Fig. 1 - system architecture and end-to-end data path (vector; edit here).
+% Line styles: solid = implemented and covered by automated software tests; dashed = hardware validation pending;
+% dotted = simulation. Colours: hardware (hwc), software (swc), radio/serial links (comc), simulation (simc).
+\begin{tikzpicture}[
+  font=\scriptsize, >={Latex[length=1.6mm]},
+  hw/.style={draw=hwc, fill=hwc!9, rounded corners=2pt, line width=.6pt, align=center, inner sep=2.2pt},
+  sw/.style={draw=swc, fill=white, line width=.6pt, align=center, inner sep=2.2pt},
+  simbox/.style={draw=simc, fill=simc!8, densely dotted, line width=.8pt, align=center, inner sep=2.2pt},
+  pend/.style={dash pattern=on 2.4pt off 1.5pt},
+  link/.style={->, line width=.9pt, draw=comc},
+  flow/.style={->, line width=.6pt, draw=black!75},
+  lbl/.style={font=\tiny, text=comc!85!black, align=center, inner sep=1pt},
+]
+% ---------------------------------------------------------------- patient side
+\node[hw, pend, text width=3.05cm, minimum height=3.75cm] (pn) at (1.6,0.25) {%
+  \textbf{Patient node}\\ ESP32-S3 + LoRa radio (RadioLib)\\[3pt]
+  MAX30102 HR/SpO$_2$ (optional)\\ DS18B20 temperature\\ MPU-6050 fall detection\\[3pt]
+  sampling every 30\,s, fault flags\\ local LED/buzzer thresholds\\ v2 frame (34\,B) + HMAC tag\\ seqNo persisted in NVS};
+% ---------------------------------------------------------------- relay and bench receiver
+\node[hw, pend, text width=2.25cm] (rl) at (5.2,-0.8) {\textbf{Relay node}\\ ESP32 + LoRa\\ CRC check, de-dup\\ hopCount${+}1$ ($\le$\,4)};
+\node[hw, text width=2.25cm] (hb) at (5.2,1.72) {\textbf{Heltec WiFi LoRa 32 V3}\\ SX1262 receiver\\ (bench prototype)};
+% ---------------------------------------------------------------- Raspberry Pi 5 gateway
+\node[sw, text width=2.15cm] (g1) at (8.55,0.75) {\textbf{Radio input}\\ SX127x via SPI\\ or UART bridge};
+\node[sw, text width=2.05cm] (g2) at (11.05,0.75) {\textbf{hw\_gateway}\\ store-and-forward\\ spool (SQLite)};
+\node[sw, text width=3.6cm]  (g3) at (14.7,0.75) {\textbf{Ingestion pipeline}\\ CRC-16 $\to$ device key $\to$ HMAC tag\\ $\to$ replay window $\to$ plausibility};
+\node[sw, text width=3.6cm]  (g4) at (14.7,-1.15) {\textbf{SQLite (WAL), separate files}\\ system $|$ hardware $|$ simulation};
+\node[sw, text width=2.05cm] (g5) at (11.05,-1.15) {\textbf{Alerts + ML}\\ thresholds, escalation\\ HGB early warning};
+\node[sw, text width=2.15cm] (g6) at (8.55,-1.15) {\textbf{REST API + SSE}\\ RBAC, CSRF,\\ hash-chained audit};
+\begin{scope}[on background layer]
+  \node[draw=hwc, fill=hwc!4, rounded corners=3pt, line width=.7pt, fit=(g1)(g2)(g3)(g4)(g5)(g6), inner sep=5pt,
+        label={[font=\scriptsize\bfseries, anchor=south east, inner sep=1.5pt]north east:Raspberry Pi 5 edge gateway}] (gw) {};
+\end{scope}
+% ---------------------------------------------------------------- users and simulation sources
+\node[sw, text width=3.05cm] (ui) at (1.6,-2.95) {\textbf{Web dashboard} (browser)\\ doctor $\cdot$ assistant $\cdot$ caregiver};
+\node[simbox, text width=3.0cm] (om) at (11.05,-3.0) {\textbf{OMNeT++ 6.5 / INET 4.6 /}\\ \textbf{FLoRa 1.3.2} model (offline)};
+\node[simbox, text width=3.3cm] (ws) at (14.7,-3.0) {\textbf{Web simulation engine}\\ virtual nodes 60001+, scenarios A--G};
+% ---------------------------------------------------------------- radio / serial links
+\draw[link] (pn.east |- g1.west) -- node[lbl, above, pos=0.5]{direct: raw LoRa (not LoRaWAN), SF7/125\,kHz} (g1.west);
+\draw[link] (pn.east |- rl.west) -- node[lbl, below]{relayed path} (rl.west);
+\draw[link] (rl.east) -- node[lbl, below right, pos=0.35]{$\le$\,4 hops} (g1.south west);
+\draw[link, pend] (pn.east |- hb.west) -- node[lbl, above]{LoRa (bench)} (hb.west);
+\draw[link, pend] (hb.east) -| node[lbl, pos=0.3, above]{UART 115200\,8N1} (g1.north);
+% ---------------------------------------------------------------- software data path
+\draw[flow] (g1) -- (g2);
+\draw[flow] (g2) -- (g3);
+\draw[flow] (g3) -- (g4);
+\draw[flow] (g4) -- (g5);
+\draw[flow] (g5) -- (g6);
+\draw[flow] ($(g6.south west)+(0.35,0)$) |- node[lbl, pos=0.72, above, text=black!75]{REST + server-sent events, per-role views} (ui.east);
+\draw[flow, simc, densely dotted] (om.west) -| node[lbl, pos=0.78, left, text=simc]{imported\\ results (JSON)} ($(g6.south east)+(-0.35,0)$);
+\draw[flow, simc, densely dotted] (ws.east) -- ++(0.35,0) |- node[lbl, pos=0.25, right, text=simc, align=left]{virtual\\ frames} (g3.east);
+% ---------------------------------------------------------------- legend
+\begin{scope}[shift={(0.0,-4.05)}]
+  \tikzset{key/.style={minimum width=4mm, minimum height=2.5mm, inner sep=0pt, anchor=center}, txt/.style={font=\tiny, anchor=west, inner sep=1pt}}
+  \node[hw, key] at (0.2,0) {};               \node[txt] at (0.5,0) {hardware};
+  \node[sw, key] at (1.9,0) {};               \node[txt] at (2.2,0) {software (Python/JS)};
+  \node[simbox, key] at (4.7,0) {};           \node[txt] at (5.0,0) {simulation};
+  \node[draw=black!70, pend, key] at (6.5,0) {}; \node[txt] at (6.8,0) {hardware validation pending};
+  \draw[link] (9.7,0) -- (10.4,0);            \node[txt] at (10.5,0) {radio / serial link};
+  \draw[flow] (12.5,0) -- (13.2,0);           \node[txt] at (13.3,0) {software data flow};
+\end{scope}
+\end{tikzpicture}

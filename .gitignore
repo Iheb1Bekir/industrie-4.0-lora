@@ -14,3 +14,6 @@ data/*
 ml/data/
 .claude/
 *.bundle
+
+# LaTeX build output of the scientific report (the final PDF is report/main.pdf)
+report/build/

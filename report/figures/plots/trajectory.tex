@@ -1,0 +1,25 @@
+% Fig. - one SYNTHETIC test-split profile (id 265, 30-s sampling, single SpO2-decline episode; selected by a fixed rule:
+% lowest-id test profile with exactly one such episode starting after the first hour). Score = deployed model, recomputed
+% sample by sample with gateway/inference.py (tools/make_figure_data.py -> figures/data/example_patient.dat).
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=1 by 3, vertical sep=0.12cm, x descriptions at=edge bottom},
+  width=\linewidth, height=2.35cm, xmin=-40, xmax=15, unbounded coords=jump,
+  tick label style={font=\tiny}, label style={font=\scriptsize}, ylabel style={align=center, yshift=-2pt},
+  extra x ticks={0,7.283}, extra x tick labels={}, extra x tick style={grid=major, major grid style={black!45, densely dashed}},
+  scale only axis=false,
+]
+\nextgroupplot[ylabel={HR\\[-2pt](bpm)}, ymin=60, ymax=132, ytick={80,120}]
+\addplot[swc, line width=.55pt] table[x=tmin, y=hr] {figures/data/example_patient.dat};
+\draw[red!70!black, densely dotted, line width=.6pt] (axis cs:-40,120) -- (axis cs:15,120);
+\nextgroupplot[ylabel={SpO$_2$\\[-2pt](\%)}, ymin=87, ymax=101, ytick={90,95,100}]
+\addplot[comc, line width=.55pt] table[x=tmin, y=spo2] {figures/data/example_patient.dat};
+\draw[red!70!black, densely dotted, line width=.6pt] (axis cs:-40,92) -- (axis cs:15,92);
+\nextgroupplot[ylabel={risk\\[-2pt]score}, ymin=0, ymax=1.05, ytick={0,0.5,1}, xlabel={Time relative to simulated episode onset (min)}, xtick={-40,-30,-20,-10,0,10}]
+\addplot[hwc, line width=.6pt] table[x=tmin, y=score] {figures/data/example_patient.dat};
+\draw[black!60, densely dotted] (axis cs:-40,0.231) -- (axis cs:15,0.231);
+\draw[black!80, dashed] (axis cs:-40,0.645) -- (axis cs:15,0.645);
+\node[font=\tiny, anchor=south west, inner sep=1pt] at (axis cs:-39.5,0.645) {high};
+\node[font=\tiny, anchor=south west, inner sep=1pt] at (axis cs:-39.5,0.231) {medium};
+\end{groupplot}
+\end{tikzpicture}

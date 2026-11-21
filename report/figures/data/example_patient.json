@@ -1,0 +1,11 @@
+{
+ "patient": 265,
+ "interval_s": 30,
+ "episode_start_s": 9793,
+ "breach_s": 10230.0,
+ "breach_min_rel": 7.283333333333333,
+ "first_medium_min_rel": -31.216666666666665,
+ "first_high_min_rel": -31.216666666666665,
+ "thr_medium": 0.23101624314856795,
+ "thr_high": 0.6448115846976289
+}

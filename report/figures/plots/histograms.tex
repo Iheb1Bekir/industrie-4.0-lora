@@ -1,0 +1,23 @@
+% Fig. - distributions of the SYNTHETIC dataset synth-v2 (627,099 samples, 600 profiles); red = beyond the alert limit.
+% Data: figures/data/hist_{hr,spo2,temp}.dat (tools/make_figure_data.py). Zero bins are mapped below the axis (log scale).
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=3 by 1, horizontal sep=0.32cm, y descriptions at=edge left},
+  width=0.405\linewidth, height=3.25cm, ymode=log, log origin=infty, ymin=1, ymax=4e5,
+  ylabel={Samples}, ytick={1,1e2,1e4}, tick label style={font=\tiny}, label style={font=\scriptsize},
+  xlabel style={yshift=2pt}, ylabel style={yshift=-3pt}, axis on top,
+]
+\nextgroupplot[xlabel={HR (bpm)}, xmin=40, xmax=200, xtick={60,120,180}]
+\addplot[ybar interval, fill=swc!55, draw=swc!70, line width=.1pt] table[x=x, y expr=\thisrow{normal}+0.001] {figures/data/hist_hr.dat};
+\addplot[ybar interval, fill=red!65, draw=red!75!black, line width=.1pt] table[x=x, y expr=\thisrow{beyond}+0.001] {figures/data/hist_hr.dat};
+\draw[densely dashed, red!70!black] (axis cs:120,1) -- (axis cs:120,4e5);
+\nextgroupplot[xlabel={SpO$_2$ (\%)}, xmin=70, xmax=101, xtick={75,85,92,100}]
+\addplot[ybar interval, fill=swc!55, draw=swc!70, line width=.1pt] table[x=x, y expr=\thisrow{normal}+0.001] {figures/data/hist_spo2.dat};
+\addplot[ybar interval, fill=red!65, draw=red!75!black, line width=.1pt] table[x=x, y expr=\thisrow{beyond}+0.001] {figures/data/hist_spo2.dat};
+\draw[densely dashed, red!70!black] (axis cs:92,1) -- (axis cs:92,4e5);
+\nextgroupplot[xlabel={Temperature (\textdegree C)}, xmin=35, xmax=41, xtick={36,38,40}]
+\addplot[ybar interval, fill=swc!55, draw=swc!70, line width=.1pt] table[x=x, y expr=\thisrow{normal}+0.001] {figures/data/hist_temp.dat};
+\addplot[ybar interval, fill=red!65, draw=red!75!black, line width=.1pt] table[x=x, y expr=\thisrow{beyond}+0.001] {figures/data/hist_temp.dat};
+\draw[densely dashed, red!70!black] (axis cs:38,1) -- (axis cs:38,4e5);
+\end{groupplot}
+\end{tikzpicture}

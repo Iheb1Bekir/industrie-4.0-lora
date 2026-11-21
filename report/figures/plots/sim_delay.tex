@@ -1,0 +1,17 @@
+% Fig. - OMNeT++/FLoRa end-to-end delay per hop count (data: figures/data/sim_delay_summary.dat,
+% produced by tools/make_figure_data.py from the doctor.app vectors of run r6; n = 64, 4, 4, 7 packets).
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth, height=3.5cm, ybar=1pt, bar width=8pt, ymin=0, ymax=400, ytick={0,100,200,300},
+  xlabel={Relay hops traversed (hopCount)}, ylabel={Delay (ms)},
+  xtick={0,1,2,3}, enlarge x limits=0.17, ymajorgrids, grid style={black!12},
+  tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  legend style={font=\tiny, at={(0.01,0.98)}, anchor=north west, draw=none, fill=none, row sep=-1pt},
+  legend cell align=left,
+  nodes near coords, every node near coord/.append style={font=\tiny, rotate=90, anchor=west, /pgf/number format/fixed, /pgf/number format/precision=1},
+]
+\addplot[fill=swc!65, draw=swc] table[x=hop, y=sim_ms] {figures/data/sim_delay_summary.dat};
+\addplot[fill=hwc!40, draw=hwc] table[x=hop, y=analytic34_ms] {figures/data/sim_delay_summary.dat};
+\legend{{simulated (FLoRa airtime model)}, {analytical, 34-B v2 frame, Eq.~(\ref{eq:toa})}}
+\end{axis}
+\end{tikzpicture}

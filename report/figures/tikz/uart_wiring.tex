@@ -1,0 +1,22 @@
+% Fig. 4 - bench UART wiring between the Heltec V3 receiver and the Raspberry Pi 5 (one direction only).
+\begin{tikzpicture}[font=\scriptsize, >={Latex[length=1.6mm]},
+  board/.style={draw=hwc, fill=hwc!7, rounded corners=2pt, line width=.6pt},
+  pin/.style={draw=black!70, fill=white, minimum width=2.2mm, minimum height=2.2mm, inner sep=0pt}]
+% Heltec V3
+\node[board, minimum width=3.3cm, minimum height=2.55cm, anchor=south west] (h) at (0,0) {};
+\node[anchor=north west, align=left, inner sep=2pt] at (h.north west) {\textbf{Heltec WiFi LoRa 32 V3}\\ ESP32-S3 + SX1262, 3.3\,V logic};
+\node[pin] (htx) at (3.3,1.55) {}; \node[anchor=east, align=right] at (3.18,1.55) {GPIO2 = UART1 TX};
+\node[pin] (hgnd) at (3.3,0.95) {}; \node[anchor=east] at (3.18,0.95) {GND};
+\node[anchor=south west, align=left, font=\tiny, text=red!60!black, inner sep=2pt] at (0,0.05)
+  {GPIO43/44 = U0TXD/RXD $\to$ CP2102\\ (USB serial/flashing): not used};
+% Raspberry Pi 5 header
+\node[board, minimum width=3.25cm, minimum height=2.55cm, anchor=south west] (p) at (5.25,0) {};
+\node[anchor=north east, align=right, inner sep=2pt] at (p.north east) {\textbf{Raspberry Pi 5}\\ 40-pin header, 3.3\,V logic};
+\node[pin] (prx) at (5.25,1.55) {}; \node[anchor=west] at (5.37,1.55) {pin 10: GPIO15 = RXD0};
+\node[pin] (pgnd) at (5.25,0.95) {}; \node[anchor=west] at (5.37,0.95) {pin 6: GND};
+\node[anchor=south east, align=right, font=\tiny, inner sep=2pt] at (8.5,0.05) {\texttt{dtoverlay=uart0-pi5}\\ $\to$ \texttt{/dev/ttyAMA0}};
+% wires
+\draw[->, line width=1.1pt, draw=comc] (htx) -- node[above, font=\tiny, text=comc!80!black, align=center] {TX $\to$ RX\\[-1pt] 115200 8N1} (prx);
+\draw[line width=1.1pt, draw=black!80] (hgnd) -- (pgnd);
+\node[font=\tiny, align=center] at (4.27,2.35) {one-way link\\[-1pt](Pi TX unused)};
+\end{tikzpicture}
