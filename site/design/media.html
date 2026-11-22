@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RPM · LoRa media frames</title>
+<link rel="stylesheet" href="../assets/brand.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #000; }
+  .frame { position: relative; overflow: hidden; box-sizing: border-box; font-family: var(--font-text); }
+  .sq { width: 1080px; height: 1080px; padding: 60px 64px; }
+  .top .kicker { font-size: 22px; }
+  .top .display { font-size: 58px; margin: 18px 0 0; max-width: 940px; }
+  .hole { position: absolute; border-radius: 14px; background: #02040a; box-shadow: 0 0 0 1px rgba(34, 211, 238, .38), 0 0 46px rgba(34, 211, 238, .16), 0 24px 60px rgba(0, 0, 0, .6); }
+  .bottom { position: absolute; left: 64px; right: 64px; bottom: 56px; }
+  .label { display: flex; align-items: center; gap: 16px; font-size: 25px; color: var(--muted); }
+  .label .chip { font-size: 18px; }
+  .chapters { display: flex; gap: 10px; margin-top: 30px; align-items: center; }
+  .chapters span { flex: 1; font-family: var(--font-mono); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); padding-top: 12px; border-top: 3px solid rgba(148, 163, 184, .18); }
+  .chapters span.on { color: var(--cyan); border-top-color: var(--cyan); box-shadow: 0 -6px 18px -10px var(--cyan); }
+  .brand { position: absolute; right: 64px; top: 62px; font-family: var(--font-mono); font-size: 18px; color: var(--muted); letter-spacing: .14em; }
+  .brand b { color: var(--cyan); font-weight: 600; }
+  .motif { position: absolute; opacity: .95; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 38px; }
+  .tile { padding: 22px 26px; }
+  .tile .n { font-family: var(--font-display); font-size: 54px; font-weight: 600; line-height: 1; }
+  .tile .t { font-size: 22px; color: var(--muted); margin-top: 8px; }
+  .repo { padding: 26px 30px; margin-top: 18px; }
+  .repo .u { font-family: var(--font-mono); font-size: 25px; color: var(--cyan); }
+  .repo .d { font-size: 21px; color: var(--muted); margin-top: 8px; }
+  .play { position: absolute; width: 132px; height: 132px; border-radius: 50%; background: rgba(34, 211, 238, .14); box-shadow: 0 0 0 2px rgba(34, 211, 238, .8), 0 0 60px rgba(34, 211, 238, .45); display: grid; place-items: center; }
+  .play::after { content: ""; margin-left: 10px; border-left: 40px solid #e6edf7; border-top: 25px solid transparent; border-bottom: 25px solid transparent; }
+</style>
+<script src="../assets/topology.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* Each frame is rendered alone with ?f=<id> by site/tools/render_media.py. Video "holes" are filled by ffmpeg
+   (site/tools/make_video.ps1) with real footage; the hole geometry below must match that script. */
+const HOLE = { x: 40, y: 300, w: 1000, h: 525 };
+const CH = ['Prototype', 'Web app', 'LoRa network', 'Early warning', 'Simulation', 'Validation'];
+const chapters = (on) => `<div class="chapters">${CH.map((c, i) => `<span class="${i === on ? 'on' : ''}">${c}</span>`).join('')}</div>`;
+const brand = '<div class="brand"><b>RPM</b> · LoRa</div>';
+const scene = (o) => `
+  <div class="frame sq lab-bg">${brand}
+    <div class="top"><div class="kicker">${o.k}</div><div class="display">${o.h}</div></div>
+    <div class="hole" style="left:${o.hole.x}px;top:${o.hole.y}px;width:${o.hole.w}px;height:${o.hole.h}px"></div>
+    <div class="bottom"><div class="label">${o.chip || ''}<span>${o.l}</span></div>${chapters(o.c)}</div>
+  </div>`;
+const SIM = '<span class="chip sim">Simulation mode</span>';
+const F = {
+  'hook': { w: 1080, h: 1080, html: `
+    <div class="frame sq lab-bg">${brand}
+      <div class="kicker" style="font-size:22px">Industry 4.0 · connected healthcare</div>
+      <div class="display grad-text" style="font-size:84px;margin-top:26px;max-width:900px">Patient vital signs over long-range radio</div>
+      <div style="font-size:31px;color:var(--muted);margin-top:28px;max-width:860px;line-height:1.35">No Wi-Fi. No cellular. Authenticated LoRa frames, an edge gateway and a clinician dashboard.</div>
+      <div class="motif" style="right:70px;bottom:110px">${topologySVG({ size: 560 })}</div>
+      <div class="bottom" style="right:auto"><div class="mono" style="font-size:21px;color:var(--faint);letter-spacing:.08em">ESP32-S3 · LoRa SF7 · Raspberry Pi 5 · OMNeT++ / FLoRa</div></div>
+    </div>` },
+  'scene-photo': { w: 1080, h: 1080, html: scene({ k: '01 · Physical prototype', h: 'A real LoRa link on the bench', hole: HOLE, chip: '<span class="chip bench">Bench</span>', l: 'Heltec V3 LoRa receiver · Raspberry Pi 5 gateway', c: 0 }) },
+  'scene-login': { w: 1080, h: 1080, html: scene({ k: '02 · Web monitoring', h: 'Three role-based workspaces', hole: { x: 40, y: 317, w: 1000, h: 490 }, l: 'doctor · medical assistant · family caregiver', c: 1 }) },
+  'scene-overview': { w: 1080, h: 1080, html: scene({ k: '02 · Web monitoring', h: 'Every patient and every alert, live', hole: HOLE, chip: SIM, l: 'all patients on screen are synthetic', c: 1 }) },
+  'scene-map': { w: 1080, h: 1080, html: scene({ k: '02 · Web monitoring', h: 'Where each patient is, at a glance', hole: HOLE, chip: SIM, l: 'fictional positions around Mahdia, Tunisia', c: 1 }) },
+  'scene-twin': { w: 1080, h: 1080, html: scene({ k: '03 · LoRa network', h: 'A digital twin of the radio network', hole: HOLE, chip: SIM, l: 'direct and relay paths, RSSI per node', c: 2 }) },
+  'scene-ai': { w: 1080, h: 1080, html: scene({ k: '04 · Early warning', h: 'A model on the gateway that warns early', hole: HOLE, chip: '<span class="chip syn">Synthetic data</span>', l: 'decision support, not diagnosis', c: 3 }) },
+  'scene-omnet': { w: 1080, h: 1080, html: scene({ k: '05 · Network simulation', h: 'OMNeT++ / FLoRa: 20 patients, 3 relays, 1 gateway', hole: HOLE, chip: '<span class="chip sim">Simulation</span>', l: 'real Qtenv run · OMNeT++ 6.5 · INET 4.6 · FLoRa 1.3.2', c: 4 }) },
+  'results': { w: 1080, h: 1080, html: `
+    <div class="frame sq lab-bg">${brand}
+      <div class="kicker" style="font-size:22px">06 · Validation</div>
+      <div style="display:flex;align-items:baseline;gap:26px;margin-top:22px">
+        <div class="display grad-text" style="font-size:150px;letter-spacing:-.04em">79/80</div>
+        <div style="font-size:34px;color:var(--text);line-height:1.25">frames delivered<br><span style="color:var(--cyan)">98.75 %</span></div>
+      </div>
+      <div class="stat-grid">
+        <div class="card tile"><div class="n" style="color:var(--cyan)">64</div><div class="t">direct to the gateway</div></div>
+        <div class="card tile"><div class="n" style="color:#c4b5fd">15</div><div class="t">relayed over 1 to 3 hops</div></div>
+        <div class="card tile"><div class="n">0</div><div class="t">collisions, 0 duplicates</div></div>
+        <div class="card tile"><div class="n" style="color:var(--warn)">1</div><div class="t">lost: received below SF7 sensitivity</div></div>
+      </div>
+      <div style="font-size:23px;color:var(--muted);margin-top:30px">Delay: 78 ms direct, +62 ms per relay hop (FLoRa airtime model).</div>
+      <div class="bottom"><div class="label"><span class="chip sim">OMNeT++ run · 120 s simulated</span></div>${chapters(5)}</div>
+    </div>` },
+  'end': { w: 1080, h: 1080, html: `
+    <div class="frame sq lab-bg">${brand}
+      <div class="kicker" style="font-size:22px">Open source</div>
+      <div class="display" style="font-size:60px;margin-top:20px;max-width:900px">Explore the code, the simulation and the report</div>
+      <div class="card repo" style="margin-top:40px"><div class="u">github.com/Iheb1Bekir/industrie-4.0-lora</div><div class="d">firmware · LoRa gateway · dashboard · early-warning model · report</div></div>
+      <div class="card repo"><div class="u">github.com/Iheb1Bekir/RPM_LoRa_Research</div><div class="d">OMNeT++ / INET / FLoRa multi-hop network simulation</div></div>
+      <div style="font-size:27px;margin-top:44px;line-height:1.45">Iheb Bekir<br><span style="color:var(--muted)">with Med Abderrahmen Essafi and Ahmed Askri</span></div>
+      <div class="bottom"><span class="chip warn">Research prototype · not a medical device</span></div>
+    </div>` },
+  'poster': { w: 1280, h: 720, html: `
+    <div class="frame lab-bg" style="width:1280px;height:720px;padding:64px 72px">
+      <div class="kicker" style="font-size:20px">RPM · LoRa — project walkthrough</div>
+      <div class="display grad-text" style="font-size:70px;margin-top:22px;max-width:700px">Remote patient monitoring over LoRa</div>
+      <div style="font-size:26px;color:var(--muted);margin-top:24px;max-width:600px;line-height:1.4">Bench prototype · live dashboard · LoRa digital twin · early-warning model · OMNeT++/FLoRa simulation</div>
+      <div class="motif" style="right:20px;top:70px">${topologySVG({ size: 560 })}</div>
+      <div class="play" style="left:72px;bottom:64px"></div>
+      <div style="position:absolute;left:228px;bottom:104px;font-size:26px;font-weight:600">Watch the 76-second demo</div>
+    </div>` },
+  'banner-a': { w: 1280, h: 640, html: `
+    <div class="frame lab-bg" style="width:1280px;height:640px;padding:62px 70px">
+      <div class="kicker" style="font-size:19px">Industry 4.0 · connected healthcare</div>
+      <div class="display grad-text" style="font-size:60px;margin-top:18px;max-width:660px">Remote Patient Monitoring over LoRa</div>
+      <div style="font-size:23px;color:var(--muted);margin-top:22px;max-width:600px;line-height:1.45">ESP32-S3 nodes · authenticated raw-LoRa frames · Raspberry Pi 5 edge gateway · role-based dashboard · on-gateway early warning</div>
+      <div style="display:flex;gap:12px;margin-top:30px;font-size:19px"><span class="chip ok">233 tests passing</span><span class="chip sim">79/80 delivered · simulated</span></div>
+      <img src="../media/dashboard-overview.webp" alt="" style="position:absolute;right:-120px;top:70px;width:640px;border-radius:14px;box-shadow:var(--glow-cyan),0 30px 70px rgba(0,0,0,.6);transform:perspective(1400px) rotateY(-14deg) rotateX(4deg)">
+    </div>` },
+  'banner-b': { w: 1280, h: 640, html: `
+    <div class="frame lab-bg" style="width:1280px;height:640px;padding:62px 70px">
+      <div class="kicker" style="font-size:19px">Network simulation · OMNeT++ / INET / FLoRa</div>
+      <div class="display grad-text" style="font-size:64px;margin-top:18px;max-width:660px">RPM LoRa Research</div>
+      <div style="font-size:24px;color:var(--muted);margin-top:22px;max-width:620px;line-height:1.45">A 20-patient, 3-relay multi-hop LoRa network with application-level forwarding, validation and duplicate suppression.</div>
+      <div style="display:flex;gap:12px;margin-top:30px;font-size:19px"><span class="chip sim">79/80 delivered · 64 direct · 15 relayed</span></div>
+      <div class="motif" style="right:40px;top:20px">${topologySVG({ size: 600, labels: true })}</div>
+    </div>` },
+};
+const id = new URLSearchParams(location.search).get('f') || 'hook';
+const f = F[id];
+document.body.style.width = f.w + 'px'; document.body.style.height = f.h + 'px';
+document.getElementById('root').innerHTML = f.html;
+window.__frames = Object.fromEntries(Object.entries(F).map(([k, v]) => [k, [v.w, v.h]]));
+</script>
+</body>
+</html>

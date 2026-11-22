@@ -19,3 +19,7 @@ ml/data/
 report/build/
 # PNG checks written by presentation/build_deck.ps1
 presentation/renders/
+
+# Website design renders (regenerate with site/tools/render_media.py) and LinkedIn launch drafts
+site/design/out/
+launch/

@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Remote patient monitoring over LoRa</title>
+<!-- LinkedIn document carousel, 1080 x 1350 per page (4:5).
+     Render:  python site/tools/render_media.py pdf site/design/carousel.html site/design/out/carousel.pdf
+     One page: carousel.html?p=N  (used for the PNG previews). Every figure comes from the project's verified results. -->
+<link rel="stylesheet" href="../assets/brand.css">
+<style>
+  @page { size: 1080px 1350px; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { position: relative; width: 1080px; height: 1350px; overflow: hidden; padding: 56px 72px 54px; display: flex; flex-direction: column;
+          font-family: var(--font-text); break-after: page; page-break-after: always; }
+  .page:last-of-type { break-after: auto; page-break-after: auto; }
+  body.single .page { display: none; }
+  body.single .page.on { display: flex; }
+  .card { backdrop-filter: none; }
+
+  .pbar { display: flex; justify-content: space-between; align-items: center; font-family: var(--font-mono); font-size: 20px; letter-spacing: .14em; color: var(--muted); }
+  .pbar b { color: var(--cyan); font-weight: 600; }
+  .k { font-size: 22px; margin-top: 50px; }
+  h1, h2, p { margin: 0; }
+  .t { font-size: 62px; margin-top: 16px; }
+  .lede { font-size: 28px; line-height: 1.42; color: var(--muted); margin-top: 20px; }
+  .lede b { color: var(--text); font-weight: 600; }
+
+  .shot { margin-top: 30px; border-radius: 16px; overflow: hidden; background: #02040a;
+          box-shadow: 0 0 0 1px rgba(34, 211, 238, .35), 0 0 46px rgba(34, 211, 238, .14), 0 24px 60px rgba(0, 0, 0, .55); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot.fill { flex: 1 1 0; min-height: 0; }                       /* photos: take the free height, centre crop */
+  .shot.fill img { height: 100%; object-fit: cover; object-position: center; }
+  .shot.fit { position: relative; flex: 0 1 auto; min-height: 0; aspect-ratio: 1600 / 840; }   /* screenshots: never crop the sides */
+  .shot.fit img { position: absolute; inset: 0; height: 100%; object-fit: cover; object-position: left top; }
+  .cap { font-size: 22px; line-height: 1.4; color: var(--muted); margin-top: 16px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .cap .chip { font-size: 16px; }
+
+  .grid2, .grid3 { display: grid; gap: 16px; margin-top: 26px; }
+  .grid2 { grid-template-columns: 1fr 1fr; }
+  .grid3 { grid-template-columns: 1fr 1fr 1fr; }
+  .tile { padding: 22px 24px; }
+  .tile .n { font-family: var(--font-display); font-size: 50px; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+  .tile .d { font-size: 21px; color: var(--muted); margin-top: 10px; line-height: 1.35; }
+
+  .foot { margin-top: auto; padding-top: 26px; display: flex; align-items: center; gap: 22px; }
+  .prog { flex: 1; display: flex; gap: 8px; }
+  .prog i { flex: 1; height: 4px; border-radius: 2px; background: rgba(148, 163, 184, .2); }
+  .prog i.done { background: rgba(34, 211, 238, .42); }
+  .prog i.on { background: var(--cyan); box-shadow: 0 0 12px rgba(34, 211, 238, .6); }
+  .swipe { font-family: var(--font-mono); font-size: 20px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); }
+
+  /* 02 · frame */
+  .fbar { display: flex; height: 76px; margin-top: 34px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 0 40px rgba(34, 211, 238, .12); }
+  .fbar span { display: grid; place-items: center; font-family: var(--font-mono); font-weight: 600; font-size: 22px; color: #05070d; border-right: 2px solid #05070d; }
+  .fbar span:last-child { border-right: 0; }
+  .fscale { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 17px; color: var(--faint); margin-top: 8px; }
+  .legend { list-style: none; padding: 0; margin: 18px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; }
+  .legend li { display: flex; align-items: center; gap: 12px; font-size: 21px; color: var(--text); }
+  .legend i { flex: none; width: 16px; height: 16px; border-radius: 4px; }
+  .legend em { margin-left: auto; font-style: normal; font-family: var(--font-mono); color: var(--muted); font-size: 19px; }
+  .panel { padding: 26px 30px; margin-top: 30px; }
+  .panel-h { font-family: var(--font-mono); font-size: 18px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .brow { display: grid; grid-template-columns: 300px 1fr; align-items: center; gap: 18px; margin-top: 18px; font-size: 22px; }
+  .brow .bar { display: flex; align-items: center; gap: 14px; }
+  .brow .bar i { height: 34px; border-radius: 6px; }
+  .brow .bar span { font-family: var(--font-mono); font-weight: 600; font-size: 22px; }
+  .note { font-size: 20px; color: var(--faint); margin-top: 18px; line-height: 1.4; }
+
+  /* 03 · status rows */
+  .rows { margin-top: 22px; display: grid; gap: 12px; }
+  .rows .r { display: grid; grid-template-columns: 210px 1fr; align-items: center; gap: 18px; font-size: 23px; padding: 16px 22px; }
+  .rows .chip { font-size: 15px; justify-self: start; }
+  .rows.sec { margin-top: 24px; gap: 10px; }
+  .rows.sec .r { grid-template-columns: 236px 1fr; padding: 14px 22px; font-size: 22px; }
+
+  /* 08 · results */
+  .big { display: flex; align-items: baseline; gap: 28px; margin-top: 22px; }
+  .big .display { font-size: 168px; letter-spacing: -.045em; line-height: .95; }
+  .big .bl { font-size: 32px; line-height: 1.3; color: var(--text); }
+  .big .bl b { color: var(--cyan); }
+  .delays .brow { grid-template-columns: 200px 1fr; }
+  .log { margin-top: 22px; background: #fff; border-radius: 10px; padding: 12px 16px; box-shadow: 0 0 0 1px rgba(148, 163, 184, .3); }
+  .log img { display: block; width: 100%; image-rendering: auto; }
+  .log .gap { font-family: var(--font-mono); font-size: 18px; line-height: 1; color: #8b9bb4; padding: 4px 0 6px; }
+
+  /* 09 · status table */
+  .st { margin-top: 34px; display: grid; gap: 14px; }
+  .st .r { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px 26px; font-size: 26px; }
+  .st .chip { font-size: 16px; flex: none; }
+  .next ul { margin: 14px 0 0; padding-left: 26px; font-size: 25px; line-height: 1.6; color: var(--text); }
+  .next li::marker { color: var(--cyan); }
+
+  /* 10 · end */
+  .repo { padding: 26px 30px; margin-top: 18px; }
+  .repo .u { font-family: var(--font-mono); font-size: 27px; color: var(--cyan); }
+  .repo .d { font-size: 21px; color: var(--muted); margin-top: 8px; }
+</style>
+<script src="../assets/topology.js"></script>
+</head>
+<body>
+
+<!-- 1 · cover -->
+<section class="page lab-bg">
+  <div class="kicker k">Industry 4.0 · connected healthcare</div>
+  <h1 class="display grad-text" style="font-size:94px;margin-top:26px;max-width:900px">Patient vital signs over long-range radio</h1>
+  <p class="lede" style="font-size:31px;max-width:720px;margin-top:30px">From a LoRa link on the bench to a 20-patient multi-hop network in OMNeT++: an open research prototype.</p>
+  <div data-motif="560" style="position:absolute;right:28px;bottom:118px"></div>
+  <div class="mono" style="position:absolute;left:72px;bottom:150px;font-size:21px;color:var(--faint);letter-spacing:.08em;line-height:1.8">ESP32-S3 · SX1262<br>LoRa SF7 · 125 kHz<br>Raspberry Pi 5 gateway<br>OMNeT++ · INET · FLoRa</div>
+</section>
+
+<!-- 2 · the radio frame -->
+<section class="page lab-bg">
+  <div class="kicker k">01 · The radio frame</div>
+  <h2 class="display t">One measurement, one 34-byte LoRa frame</h2>
+  <p class="lede">No Wi-Fi, no cellular. Each reading leaves the patient node as an <b>authenticated binary frame</b> at SF7, 125 kHz and 14 dBm.</p>
+  <div class="fbar">
+    <span style="flex:2;background:#94a3b8">2</span><span style="flex:6;background:#67e8f9">6</span><span style="flex:8;background:#93c5fd">8</span><span style="flex:4;background:#fda4af">4</span><span style="flex:4;background:#fcd34d">4</span><span style="flex:8;background:#c4b5fd">8</span><span style="flex:2;background:#cbd5e1">2</span>
+  </div>
+  <div class="fscale"><span>byte 0</span><span>34 bytes</span></div>
+  <ul class="legend">
+    <li><i style="background:#94a3b8"></i>Version, payload type<em>2 B</em></li>
+    <li><i style="background:#fda4af"></i>Heart rate, SpO₂, temperature<em>4 B</em></li>
+    <li><i style="background:#67e8f9"></i>Patient, source, destination<em>6 B</em></li>
+    <li><i style="background:#fcd34d"></i>Flags, alert, routing, hops, battery<em>4 B</em></li>
+    <li><i style="background:#93c5fd"></i>Sequence number, timestamp<em>8 B</em></li>
+    <li><i style="background:#c4b5fd"></i>HMAC-SHA256 tag, 64 bit<em>8 B</em></li>
+    <li></li>
+    <li><i style="background:#cbd5e1"></i>CRC-16<em>2 B</em></li>
+  </ul>
+  <div class="card panel" style="margin-top:26px;padding:22px 30px">
+    <div class="panel-h">Time on air · SF7 / 125 kHz</div>
+    <div class="brow"><span>Binary frame · 34 B</span><span class="bar"><i style="width:85px;background:var(--cyan)"></i><span style="color:var(--cyan)">77.1 ms</span></span></div>
+    <div class="brow"><span>JSON, same fields · 241 B</span><span class="bar"><i style="width:420px;background:var(--bad)"></i><span style="color:var(--bad)">379.1 ms</span></span></div>
+    <div class="note" style="margin-top:14px">Semtech AN1200.13 formula. One frame every 30 s is a 0.26 % duty cycle; JSON would need 4.9 times the airtime.</div>
+  </div>
+  <div class="rows sec">
+    <div class="card r"><span class="chip ok">Authenticated</span><span>HMAC-SHA256 tag with a per-device 256-bit key</span></div>
+    <div class="card r"><span class="chip ok">Replay-checked</span><span>32-bit sequence number, kept across reboots</span></div>
+    <div class="card r"><span class="chip warn">Not encrypted</span><span>AES-CCM payload encryption is the next step</span></div>
+  </div>
+</section>
+
+<!-- 3 · physical prototype -->
+<section class="page lab-bg">
+  <div class="kicker k">02 · Physical prototype</div>
+  <h2 class="display t">A real LoRa link on the bench</h2>
+  <div class="shot fill"><img src="../media/hardware-bench.jpg" alt="" style="object-position:center"></div>
+  <div class="cap">Heltec WiFi LoRa 32 V3 receiver (ESP32-S3 + SX1262) and the Raspberry Pi 5 edge gateway</div>
+  <div class="rows">
+    <div class="card r"><span class="chip ok">Operating</span><span>Heltec V3 bench receiver, UART bridge to the gateway</span></div>
+    <div class="card r"><span class="chip warn">To confirm</span><span>Reception on the Raspberry Pi 5 (UART0 configured)</span></div>
+    <div class="card r"><span class="chip warn">Pending</span><span>ESP32-S3 patient and relay nodes: firmware written, not yet flashed</span></div>
+  </div>
+</section>
+
+<!-- 4 · gateway and web app -->
+<section class="page lab-bg">
+  <div class="kicker k">03 · Edge gateway and web app</div>
+  <h2 class="display t">Every patient and every alert, live</h2>
+  <p class="lede">The gateway checks each frame, stores it and serves role-based workspaces for the <b>doctor</b>, the <b>medical assistant</b> and the <b>family caregiver</b>.</p>
+  <div class="shot fit"><img src="../media/dashboard-overview.webp" alt=""></div>
+  <div class="cap"><span class="chip sim">Simulation mode</span>every patient on screen is synthetic</div>
+  <div class="grid3">
+    <div class="card tile"><div class="n" style="color:var(--cyan)">3</div><div class="d">role-based workspaces</div></div>
+    <div class="card tile"><div class="n" style="color:var(--ok)">233/233</div><div class="d">automated tests passing</div></div>
+    <div class="card tile"><div class="n" style="color:#c4b5fd">A–G</div><div class="d">simulated scenarios through the real pipeline</div></div>
+  </div>
+</section>
+
+<!-- 5 · LoRa digital twin -->
+<section class="page lab-bg">
+  <div class="kicker k">04 · LoRa network digital twin</div>
+  <h2 class="display t">Direct and relay paths, RSSI per node</h2>
+  <p class="lede">Relaying is <b>application-level</b>: each relay checks the frame, enforces the hop limit, increments the hop count and drops duplicates. It is not LoRaWAN mesh.</p>
+  <div class="shot fit"><img src="../media/dashboard-network.webp" alt=""></div>
+  <div class="cap"><span class="chip sim">Simulation mode</span>LoRa network page of the web app</div>
+  <div class="grid3">
+    <div class="card tile"><div class="n">4</div><div class="d">hop limit, enforced by every relay</div></div>
+    <div class="card tile"><div class="n">HMAC</div><div class="d">origin check with a per-device key</div></div>
+    <div class="card tile"><div class="n">ID + seq</div><div class="d">duplicate suppression key</div></div>
+  </div>
+</section>
+
+<!-- 6 · early warning -->
+<section class="page lab-bg">
+  <div class="kicker k">05 · Early warning</div>
+  <h2 class="display t">A model that warns minutes ahead</h2>
+  <p class="lede">Gradient-boosted trees (450 KiB) score each patient's last 15 minutes inside the gateway software and show the top factors.</p>
+  <div class="shot fit"><img src="../media/dashboard-ai.webp" alt=""></div>
+  <div class="cap"><span class="chip syn">Synthetic data</span><span class="chip warn">Decision support, not diagnosis</span></div>
+  <div class="grid2">
+    <div class="card tile"><div class="n" style="color:var(--cyan)">92/97</div><div class="d">test episodes warned in advance</div></div>
+    <div class="card tile"><div class="n" style="color:var(--cyan)">8.5 min</div><div class="d">median lead time (25th percentile 6.0 min)</div></div>
+    <div class="card tile"><div class="n">0.543</div><div class="d">PR-AUC at 1.6 % prevalence (ROC-AUC 0.886)</div></div>
+    <div class="card tile"><div class="n" style="color:var(--warn)">7.06</div><div class="d">false-alarm episodes per patient-day: still too many</div></div>
+  </div>
+</section>
+
+<!-- 7 · network simulation -->
+<section class="page lab-bg">
+  <div class="kicker k">06 · Network simulation</div>
+  <h2 class="display t">20 patients, 3 relays, 1 gateway in OMNeT++</h2>
+  <p class="lede">OMNeT++ 6.5 · INET 4.6 · FLoRa 1.3.2. Patients 1–16 reach the gateway directly; patients 17–20 join the relay chain <b>1 → 2 → 3 → gateway</b>.</p>
+  <div class="shot fill"><img src="img/omnet-network.jpg" alt="" style="object-position:center"></div>
+  <div class="cap"><span class="chip sim">Real Qtenv run</span>patient 3's first frame on air at t = 4 s (HR 74, SpO₂ 97, 36.6 °C, hop 0)</div>
+  <div class="grid3">
+    <div class="card tile"><div class="n" style="color:var(--cyan)">20</div><div class="d">patients on 25, 45 and 80 m rings</div></div>
+    <div class="card tile"><div class="n" style="color:#c4b5fd">3</div><div class="d">relays on a 30 m ring</div></div>
+    <div class="card tile"><div class="n">30 s</div><div class="d">between two measurements</div></div>
+  </div>
+</section>
+
+<!-- 8 · results -->
+<section class="page lab-bg">
+  <div class="kicker k">07 · Validation · 120 s simulated</div>
+  <div class="big"><span class="display grad-text">79/80</span><span class="bl">valid frames at the gateway<br><b>98.75 % delivered</b></span></div>
+  <div class="grid2">
+    <div class="card tile"><div class="n" style="color:var(--cyan)">64</div><div class="d">direct to the gateway</div></div>
+    <div class="card tile"><div class="n" style="color:#c4b5fd">15</div><div class="d">relayed over 1 to 3 relay hops</div></div>
+    <div class="card tile"><div class="n">0</div><div class="d">collisions and 0 duplicates</div></div>
+    <div class="card tile"><div class="n" style="color:var(--warn)">1</div><div class="d">lost: −124.8 dBm at relay 1, below SF7 sensitivity</div></div>
+  </div>
+  <div class="card panel delays" style="margin-top:22px">
+    <div class="panel-h">End-to-end delay</div>
+    <div class="brow"><span>Direct</span><span class="bar"><i style="width:131px;background:var(--cyan)"></i><span>78.08 ms</span></span></div>
+    <div class="brow"><span>1 relay hop</span><span class="bar"><i style="width:234px;background:#a78bfa"></i><span>139.78 ms</span></span></div>
+    <div class="brow"><span>2 relay hops</span><span class="bar"><i style="width:337px;background:#a78bfa"></i><span>201.47 ms</span></span></div>
+    <div class="brow"><span>3 relay hops</span><span class="bar"><i style="width:440px;background:#a78bfa"></i><span>263.17 ms</span></span></div>
+    <div class="note">FLoRa computes airtime from a fixed 20-byte payload.</div>
+  </div>
+  <div class="log"><img src="img/omnet-log-end.png" alt="Simulation time limit reached at t=120s"><div class="gap">⋮</div><img src="img/omnet-log-tx.png" alt="LoRaMedium transmission count = 113"></div>
+  <div class="cap" style="margin-top:12px">Qtenv log, end of run: 113 transmissions = 80 patient frames + 33 relay forwards</div>
+</section>
+
+<!-- 9 · status -->
+<section class="page lab-bg">
+  <div class="kicker k">08 · Honest status</div>
+  <h2 class="display t">What is real, what is simulated</h2>
+  <div class="st">
+    <div class="card r"><span>LoRa bench link, Heltec V3 receiver</span><span class="chip ok">Operating</span></div>
+    <div class="card r"><span>Raspberry Pi 5 gateway reception</span><span class="chip warn">To confirm</span></div>
+    <div class="card r"><span>ESP32-S3 patient and relay firmware</span><span class="chip warn">Not yet flashed</span></div>
+    <div class="card r"><span>Gateway software and web platform</span><span class="chip ok">233/233 tests</span></div>
+    <div class="card r"><span>Early-warning model</span><span class="chip syn">Synthetic data</span></div>
+    <div class="card r"><span>20-patient multi-hop network</span><span class="chip sim">OMNeT++ simulation</span></div>
+  </div>
+  <div class="card panel next">
+    <div class="panel-h">Next</div>
+    <ul>
+      <li>Flash the nodes and confirm reception on the Pi 5</li>
+      <li>Measure delivery, RSSI and delay on site</li>
+      <li>Run FLoRa's 1000-node ADR and two-gateway scenarios</li>
+      <li>Add AES-CCM payload encryption; reduce false alarms</li>
+    </ul>
+  </div>
+  <div style="margin-top:30px"><span class="chip warn" style="font-size:18px">Research prototype · not a medical device</span></div>
+</section>
+
+<!-- 10 · links and credits -->
+<section class="page lab-bg">
+  <div class="kicker k">Open source</div>
+  <h2 class="display t" style="font-size:66px">Explore the code, the simulation and the report</h2>
+  <div class="card repo" style="margin-top:44px"><div class="u">github.com/Iheb1Bekir/industrie-4.0-lora</div><div class="d">firmware · LoRa gateway · web app · early-warning model · report · slides</div></div>
+  <div class="card repo"><div class="u">github.com/Iheb1Bekir/RPM_LoRa_Research</div><div class="d">OMNeT++ / INET / FLoRa multi-hop network simulation</div></div>
+  <div style="font-size:30px;margin-top:48px;line-height:1.5">Iheb Bekir<br><span style="color:var(--muted)">with Med Abderrahmen Essafi and Ahmed Askri</span></div>
+  <div data-motif="400" style="position:absolute;right:40px;bottom:120px;opacity:.9"></div>
+  <div style="position:absolute;left:72px;bottom:130px"><span class="chip warn" style="font-size:18px">Research prototype · not a medical device</span></div>
+</section>
+
+<script>
+  const pages = [...document.querySelectorAll('.page')];
+  const N = pages.length, pad = (n) => String(n).padStart(2, '0');
+  pages.forEach((p, i) => {
+    p.insertAdjacentHTML('afterbegin', `<div class="pbar"><span><b>RPM</b> · LoRa</span><span>${pad(i + 1)} / ${pad(N)}</span></div>`);
+    p.insertAdjacentHTML('beforeend', `<div class="foot"><div class="prog">${pages.map((_, j) => `<i class="${j === i ? 'on' : j < i ? 'done' : ''}"></i>`).join('')}</div>${i === 0 ? '<span class="swipe">Swipe →</span>' : ''}</div>`);
+  });
+  document.querySelectorAll('[data-motif]').forEach((m) => { m.innerHTML = topologySVG({ size: +m.dataset.motif }); });
+  const only = +new URLSearchParams(location.search).get('p');
+  if (only) { document.body.classList.add('single'); pages[only - 1].classList.add('on'); }
+</script>
+</body>
+</html>

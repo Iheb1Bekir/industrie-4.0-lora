@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remote Patient Monitoring over LoRa · RPM·LoRa</title>
+<meta name="description" content="ESP32 patient nodes, authenticated raw-LoRa frames, a Raspberry Pi 5 edge gateway, a role-based dashboard and an OMNeT++/FLoRa multi-hop network simulation. Research prototype, not a medical device.">
+<link rel="canonical" href="https://iheb1bekir.github.io/industrie-4.0-lora/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RPM·LoRa">
+<meta property="og:url" content="https://iheb1bekir.github.io/industrie-4.0-lora/">
+<meta property="og:title" content="Remote Patient Monitoring over LoRa">
+<meta property="og:description" content="From ESP32 bedside nodes to a doctor dashboard and a 20-patient multi-hop LoRa network simulation.">
+<meta property="og:image" content="https://iheb1bekir.github.io/industrie-4.0-lora/media/social-preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Remote Patient Monitoring over LoRa: ESP32-S3 nodes, authenticated raw-LoRa frames, Raspberry Pi 5 gateway and the clinician dashboard">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Remote Patient Monitoring over LoRa">
+<meta name="twitter:description" content="From ESP32 bedside nodes to a doctor dashboard and a 20-patient multi-hop LoRa network simulation.">
+<meta name="twitter:image" content="https://iheb1bekir.github.io/industrie-4.0-lora/media/social-preview.png">
+<meta name="theme-color" content="#05070d">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2305070d'/%3E%3Cpath d='M4 17h6l3-8 5 15 3-7h7' fill='none' stroke='%2322d3ee' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/brand.css">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body class="lab-bg">
+<a class="skip" href="#main">Skip to content</a>
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#top" aria-label="RPM LoRa home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 17h6l3-8 5 15 3-7h9"/></svg><b>RPM</b><span>·LoRa</span></a>
+    <nav aria-label="Sections"><a href="#journey">Journey</a><a href="#prototype">Prototype</a><a href="#architecture">Architecture</a><a href="#simulation">Simulation</a><a href="#demo">Demo</a><a href="#intelligence">Early warning</a><a href="#code">Code</a></nav>
+    <a class="btn ghost small" href="https://github.com/Iheb1Bekir/industrie-4.0-lora">GitHub</a>
+  </div>
+</header>
+
+<main id="main">
+<!-- ============================================================ hero -->
+<section class="hero wrap" id="top">
+  <div class="hero-text">
+    <div class="kicker">Industry 4.0 · connected healthcare research</div>
+    <h1 class="display grad-text">Remote Patient Monitoring over LoRa</h1>
+    <p class="lede">From ESP32 bedside nodes and authenticated raw-LoRa frames to a Raspberry&nbsp;Pi&nbsp;5 edge gateway, a clinician dashboard and a 20-patient multi-hop network simulation.</p>
+    <div class="cta"><a class="btn" href="#demo">▶ Watch the demo</a><a class="btn ghost" href="https://github.com/Iheb1Bekir/industrie-4.0-lora">Platform repo</a><a class="btn ghost" href="https://github.com/Iheb1Bekir/RPM_LoRa_Research">Simulation repo</a></div>
+    <ul class="pills">
+      <li><b>34&nbsp;B</b> authenticated frame</li>
+      <li><b>233/233</b> software tests <span class="chip ok">tested</span></li>
+      <li><b>79/80</b> frames delivered <span class="chip sim">simulated</span></li>
+      <li><b>92/97</b> episodes warned early <span class="chip syn">synthetic</span></li>
+    </ul>
+  </div>
+  <figure class="card net" aria-label="Replay of the evaluated OMNeT++ run">
+    <div class="net-head"><span class="kicker">Live replay · OMNeT++ run r6</span><button class="btn ghost tiny" id="netToggle" type="button" aria-pressed="false">Pause</button></div>
+    <canvas id="net" width="560" height="560"></canvas>
+    <div class="net-stats" aria-live="off">
+      <div><span id="cGen">0</span><small>generated</small></div>
+      <div><span id="cDir" class="c-cyan">0</span><small>direct</small></div>
+      <div><span id="cRel" class="c-violet">0</span><small>via relays</small></div>
+      <div><span id="cLost" class="c-warn">0</span><small>lost</small></div>
+    </div>
+    <figcaption>Real geometry and real departure times of the 120&nbsp;s run (×8); travel time stretched for visibility. <span class="leg"><i class="d-p"></i>patient <i class="d-r"></i>relay <i class="d-g"></i>doctor gateway</span></figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ journey -->
+<section class="wrap block" id="journey">
+  <div class="sec-head"><div class="kicker">The engineering journey</div><h2 class="display">Five layers, one measurement</h2>
+    <p class="lede">The same measurement (patient, sequence, time, heart rate, SpO₂, temperature, fall, alert level, routing fields) travels through every layer.</p></div>
+  <ol class="journey">
+    <li><span class="n">01</span><h3>Embedded systems</h3><p>ESP32-S3 firmware samples every 30&nbsp;s, flags sensor faults and signs each frame.</p><span class="chip warn">firmware written · not flashed</span></li>
+    <li><span class="n">02</span><h3>LoRa communication</h3><p>Raw LoRa (not LoRaWAN), SF7/125&nbsp;kHz, 34-byte frames, up to 4 relay hops.</p><span class="chip bench">bench link operating</span></li>
+    <li><span class="n">03</span><h3>Remote monitoring</h3><p>Raspberry&nbsp;Pi&nbsp;5 gateway software, role-based dashboard, alerts and audit.</p><span class="chip ok">233 tests passing</span></li>
+    <li><span class="n">04</span><h3>Network simulation</h3><p>OMNeT++ 6.5 · INET 4.6 · FLoRa 1.3.2 model of 20 patients and 3 relays.</p><span class="chip sim">simulated</span></li>
+    <li><span class="n">05</span><h3>Performance validation</h3><p>Delivery, delay per hop, early-warning lead time and false alarms.</p><span class="chip syn">synthetic + simulated</span></li>
+  </ol>
+</section>
+
+<!-- ============================================================ two repos -->
+<section class="wrap block" id="repos">
+  <div class="sec-head"><div class="kicker">Two repositories, one project</div><h2 class="display">From physical IoT implementation to distributed network simulation</h2></div>
+  <div class="grid2">
+    <a class="card repo" href="https://github.com/Iheb1Bekir/industrie-4.0-lora">
+      <span class="chip bench">Repository A</span><h3>industrie-4.0-lora</h3>
+      <p>Physical and software side: ESP32 patient/relay firmware, the v2 authenticated frame, the Raspberry&nbsp;Pi&nbsp;5 gateway, the web platform, the early-warning model, the report and the presentation.</p>
+      <span class="go">github.com/Iheb1Bekir/industrie-4.0-lora →</span></a>
+    <a class="card repo" href="https://github.com/Iheb1Bekir/RPM_LoRa_Research">
+      <span class="chip sim">Repository B</span><h3>RPM_LoRa_Research</h3>
+      <p>Network side: an OMNeT++/INET/FLoRa model of a 20-patient, 3-relay deployment with application-level forwarding, validation and duplicate suppression.</p>
+      <span class="go">github.com/Iheb1Bekir/RPM_LoRa_Research →</span></a>
+  </div>
+  <p class="note">How they connect: both use the same measurement fields and radio profile (SF7, 125&nbsp;kHz, 14&nbsp;dBm, at most 4 hops), and the platform imports the simulation's result summary into its network page. They are not yet one deployed end-to-end system: the physical sensor node and on-site radio tests are pending.</p>
+</section>
+
+<!-- ============================================================ prototype -->
+<section class="wrap block" id="prototype">
+  <div class="sec-head"><div class="kicker">Physical prototype — hardware implementation</div><h2 class="display">A real LoRa link on the bench</h2></div>
+  <div class="grid2 proto">
+    <figure class="card photo"><img src="media/hardware-bench.jpg" alt="Bench prototype: Heltec WiFi LoRa 32 V3 receiver with OLED, breadboard with sensor and LEDs, Raspberry Pi 5 with active cooler" loading="lazy" width="1280" height="760">
+      <figcaption>Heltec WiFi LoRa 32 V3 receiver (OLED: packet counter, temperature, humidity, RSSI, SNR), DHT-type sensor and status LEDs, Raspberry&nbsp;Pi&nbsp;5. The bench link carries temperature and humidity; vital signs on this site are synthetic or simulated.</figcaption></figure>
+    <div class="stack">
+      <ul class="parts">
+        <li><b>Heltec WiFi LoRa 32 V3</b><span>ESP32-S3 + SX1262 + OLED, bench receiver</span><span class="chip ok">operating</span></li>
+        <li><b>Raspberry Pi 5</b><span>edge gateway, UART0 and SPI0 header</span><span class="chip sim">UART configured</span></li>
+        <li><b>ESP32-S3 patient node</b><span>firmware for MAX30102, DS18B20, MPU-6050</span><span class="chip warn">pending</span></li>
+        <li><b>SX1276/78 or SX1262</b><span>raw LoRa PHY, chosen explicitly per board</span><span class="chip warn">pending</span></li>
+      </ul>
+      <div class="card fix"><div class="kicker">Debugging story · UART</div>
+        <p><b>No data on <code>/dev/serial0</code>.</b> On the Pi&nbsp;5 it pointed to the debug UART (<code>ttyAMA10</code>); <code>dtoverlay=uart0-pi5</code> routes UART0 to GPIO14/15 (<code>/dev/ttyAMA0</code>). On the Heltec, GPIO43 belongs to the USB bridge, so UART1 TX moved to <code>GPIO2</code>. Reception on the Pi is still to be confirmed.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ architecture explorer -->
+<section class="wrap block" id="architecture">
+  <div class="sec-head"><div class="kicker">Interactive architecture explorer</div><h2 class="display">Three tiers, from bedside to screen</h2><p class="lede">Select a component to see what it does and how far it has been validated.</p></div>
+  <div class="arch card">
+    <svg id="archSvg" viewBox="0 0 960 420" role="group" aria-label="System architecture"></svg>
+    <aside class="arch-panel" id="archPanel" aria-live="polite"></aside>
+  </div>
+</section>
+
+<!-- ============================================================ frame -->
+<section class="wrap block" id="frame">
+  <div class="sec-head"><div class="kicker">LoRa communication</div><h2 class="display">34 bytes carry the whole measurement, signed</h2></div>
+  <div class="bytes" id="bytes" aria-label="Protocol v2 frame layout"></div>
+  <div class="grid2 airtime">
+    <div class="card pad"><h3>Time on air at SF7 / 125 kHz</h3><div id="airChart"></div><p class="small">Semtech AN1200.13 formula. A compact JSON of the same 15 fields is 241&nbsp;B.</p></div>
+    <div class="card pad"><h3>Why it matters</h3><ul class="ticks">
+      <li><b>0.26 %</b> duty cycle at one frame per 30&nbsp;s (1&nbsp;% SRD sub-band limit).</li>
+      <li><b>HMAC-SHA256</b> 64-bit tag per device key; relays may change only the hop counter.</li>
+      <li><b>Replay window</b> of 62 frames per device on the gateway.</li>
+      <li><b>0.90</b> pure-ALOHA success for 20 nodes on one channel (theory): scaling needs channels, spreading factors or scheduling.</li></ul></div>
+  </div>
+</section>
+
+<!-- ============================================================ simulation -->
+<section class="wrap block" id="simulation">
+  <div class="sec-head"><div class="kicker">Network simulation — OMNeT++ / FLoRa</div><h2 class="display">79 of 80 frames delivered over a multi-hop LoRa network</h2>
+    <p class="lede">OMNeT++ 6.5.0 · INET 4.6.0 · FLoRa 1.3.2 (opp_env). Doctor gateway at the centre, 20 patients on 25/45/80&nbsp;m rings, 3 relays on a 30&nbsp;m ring; patients 17–20 reach the gateway through an ordered relay chain.</p></div>
+  <div class="grid2 proto">
+    <figure class="card shot"><video src="media/omnet-run.mp4" poster="media/omnet-run-poster.jpg" muted loop playsinline autoplay preload="metadata" aria-label="Recording of the OMNeT++ Qtenv run: LoRa frames between patients, relays and the doctor gateway, then the end-of-run statistics" width="1000" height="525"></video><figcaption>Real Qtenv recording of <code>DistributedRPMNetwork</code>: frames in flight, then the end-of-run statistics (120&nbsp;s simulated).</figcaption></figure>
+    <div class="stack">
+      <div class="card pad results"><div class="big grad-text">98.75 %</div><div class="small">packet delivery ratio · 120&nbsp;s run <span class="chip sim">simulated</span></div>
+        <div id="donut"></div></div>
+      <figure class="card shot"><img src="media/omnet-log.png" alt="LoRaMedium statistics printed by finish(): 113 transmissions" loading="lazy" width="962" height="207"><figcaption>113 receptions at the doctor = 80 patient frames + 33 relay forwards.</figcaption></figure>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card pad"><h3>End-to-end delay per relay hop</h3><div id="delayChart"></div><p class="small">Simulated delays come from FLoRa 1.3.2's airtime model, which assumes a fixed 20-byte payload; the real 34-byte frame needs at least 77.1&nbsp;ms per hop (analytical bars).</p></div>
+    <div class="card pad"><h3>Relay load and the single loss</h3><div id="relayChart"></div><p class="small">Patient 18's first frame reached relay&nbsp;1 at about −124.8&nbsp;dBm, below SF7 sensitivity: shadowing on the outer ring, not a protocol error. Transmissions are staggered 1.5&nbsp;s apart, so this run cannot show collisions.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ demo -->
+<section class="wrap block" id="demo">
+  <div class="sec-head"><div class="kicker">Web monitoring interface</div><h2 class="display">The dashboard, recorded live</h2><p class="lede">Real screen recording of the platform in simulation mode: every patient on screen is synthetic.</p></div>
+  <div class="grid2 demo">
+    <div class="card video"><video id="demoVideo" controls playsinline preload="metadata" poster="media/video-poster.jpg"><source src="media/rpm-lora-showcase.mp4" type="video/mp4">Your browser cannot play this video. <a href="media/rpm-lora-showcase.mp4">Download it</a>.</video></div>
+    <ul class="ticks feat">
+      <li><b>Three roles, enforced on the server:</b> doctor, medical assistant (assigned patients), family caregiver (one patient, recorded consent).</li>
+      <li><b>Live overview:</b> server-sent events, alert lifecycle with escalation, and a data-flow strip that makes radio losses visible.</li>
+      <li><b>LoRa digital twin:</b> direct and relay paths, RSSI/SNR and delivery ratio per device.</li>
+      <li><b>Early warning:</b> model score, contributing features and calibration, next to deterministic threshold alerts.</li>
+    </ul>
+  </div>
+  <div class="gallery" id="gallery">
+    <button type="button" data-src="media/dashboard-overview.webp" data-cap="Clinical overview"><img src="media/dashboard-overview.webp" alt="Clinical overview" loading="lazy"><span>Clinical overview</span></button>
+    <button type="button" data-src="media/dashboard-network.webp" data-cap="LoRa network digital twin"><img src="media/dashboard-network.webp" alt="LoRa network digital twin" loading="lazy"><span>LoRa digital twin</span></button>
+    <button type="button" data-src="media/dashboard-map.webp" data-cap="Patient map (fictional coordinates)"><img src="media/dashboard-map.webp" alt="Patient map" loading="lazy"><span>Patient map</span></button>
+    <button type="button" data-src="media/dashboard-ai.webp" data-cap="AI intelligence page"><img src="media/dashboard-ai.webp" alt="AI intelligence page" loading="lazy"><span>Early-warning model</span></button>
+    <button type="button" data-src="media/dashboard-patients.webp" data-cap="Patient list"><img src="media/dashboard-patients.webp" alt="Patient list" loading="lazy"><span>Patients</span></button>
+  </div>
+</section>
+
+<!-- ============================================================ intelligence -->
+<section class="wrap block" id="intelligence">
+  <div class="sec-head"><div class="kicker">On-gateway early warning <span class="chip syn">synthetic data</span></div><h2 class="display">Warnings minutes ahead, and an honest false-alarm count</h2>
+    <p class="lede">Gradient boosting predicts a sustained threshold breach within 10&nbsp;min from the last 15&nbsp;min; trained and tested on a synthetic 600-profile cohort split by patient. Decision support, not diagnosis.</p></div>
+  <div class="kpis">
+    <div class="card"><b>92/97</b><span>test episodes warned in advance</span></div>
+    <div class="card"><b>8.5 min</b><span>median lead time</span></div>
+    <div class="card"><b>0.543</b><span>PR-AUC at 1.6&nbsp;% prevalence</span></div>
+    <div class="card warnk"><b>7.06</b><span>false-alarm episodes per patient-day</span></div>
+  </div>
+  <div class="card pad"><h3>Model score on one synthetic test profile</h3><div id="trajChart"></div><p class="small">The score crosses the high level 3.5&nbsp;min before the sustained breach; isolated heart-rate artifacts at −31 and −8&nbsp;min cause transient spikes.</p></div>
+</section>
+
+<!-- ============================================================ evidence -->
+<section class="wrap block" id="evidence">
+  <div class="sec-head"><div class="kicker">Evidence and limits</div><h2 class="display">What is proven, and how</h2></div>
+  <div class="evidence">
+    <div class="card"><span class="chip ok">tested</span><p>233/233 automated tests; C++ frame encoder byte-identical to the Python reference.</p></div>
+    <div class="card"><span class="chip sim">simulated</span><p>79/80 delivered, 64 direct, 15 relayed, 0 collisions (OMNeT++, 120&nbsp;s).</p></div>
+    <div class="card"><span class="chip bench">bench</span><p>LoRa link with a Heltec V3 receiver; Pi&nbsp;5 UART configured, reception not confirmed.</p></div>
+    <div class="card"><span class="chip">analytical</span><p>77.1&nbsp;ms on air for 34&nbsp;B; 0.26&nbsp;% duty cycle; ALOHA estimate 0.90 for 20 nodes.</p></div>
+    <div class="card"><span class="chip syn">synthetic</span><p>Model evaluated on synthetic data only; no patient data was used anywhere.</p></div>
+    <div class="card"><span class="chip warn">pending</span><p>Sensor node, on-site radio tests, Pi&nbsp;5 deployment, payload encryption, TLS.</p></div>
+  </div>
+  <p class="note">Research prototype, not a medical device and not clinically validated. The relay design is a custom application-level forwarding scheme, not LoRaWAN.</p>
+</section>
+
+<!-- ============================================================ code & team -->
+<section class="wrap block" id="code">
+  <div class="sec-head"><div class="kicker">Code, documents and team</div><h2 class="display">Explore the project</h2></div>
+  <div class="links">
+    <a class="card" href="https://github.com/Iheb1Bekir/industrie-4.0-lora"><b>Platform repository</b><span>firmware · gateway · dashboard · model</span></a>
+    <a class="card" href="https://github.com/Iheb1Bekir/RPM_LoRa_Research"><b>Simulation repository</b><span>OMNeT++ · INET · FLoRa model</span></a>
+    <a class="card" href="https://github.com/Iheb1Bekir/industrie-4.0-lora/blob/main/report/main.pdf"><b>Technical report (PDF)</b><span>7 pages, every number traced</span></a>
+    <a class="card" href="https://github.com/Iheb1Bekir/industrie-4.0-lora/blob/main/presentation/RPM_LoRa_presentation.pdf"><b>Presentation (PDF)</b><span>19 slides with speaker notes in the .pptx</span></a>
+    <a class="card" href="https://github.com/Iheb1Bekir/industrie-4.0-lora/tree/main/docs"><b>Documentation</b><span>architecture · protocol · security · setup</span></a>
+  </div>
+  <div class="team card pad"><div class="kicker">Team</div><p><b>Iheb Bekir</b> · with <b>Med Abderrahmen Essafi</b> and <b>Ahmed Askri</b></p></div>
+</section>
+</main>
+
+<footer class="foot"><div class="wrap">RPM·LoRa · research prototype, not a medical device · all vital-sign values shown are synthetic or simulated</div></footer>
+
+<dialog id="lightbox"><img alt=""><p></p><button type="button" class="btn ghost small" value="close">Close</button></dialog>
+<script src="assets/topology.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

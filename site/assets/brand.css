@@ -1,0 +1,69 @@
+/* RPM · LoRa — shared visual identity (website, README visuals, video frames, carousel).
+   Deep navy / near-black, electric cyan and blue accents, subtle violet highlights. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap");
+
+:root {
+  --bg: #05070d;
+  --bg-2: #0a0f1c;
+  --surface: rgba(15, 23, 42, 0.72);
+  --surface-2: rgba(30, 41, 59, 0.55);
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(148, 163, 184, 0.28);
+  --text: #e6edf7;
+  --muted: #8b9bb4;
+  --faint: #5d6b82;
+  --cyan: #22d3ee;
+  --blue: #3b82f6;
+  --violet: #8b5cf6;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --radius: 16px;
+  --font-display: "Space Grotesk", "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
+  --font-text: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --glow-cyan: 0 0 0 1px rgba(34, 211, 238, 0.35), 0 0 32px rgba(34, 211, 238, 0.18);
+}
+
+/* lab background: two soft glows and a faint measurement grid */
+.lab-bg {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(60% 50% at 12% 0%, rgba(34, 211, 238, 0.13), transparent 70%),
+    radial-gradient(55% 45% at 100% 100%, rgba(139, 92, 246, 0.14), transparent 70%),
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+  color: var(--text);
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.08; }
+.grad-text {
+  background: linear-gradient(92deg, #e6edf7 0%, #a5f3fc 45%, #93c5fd 75%, #c4b5fd 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 0.45em;
+  font-family: var(--font-mono); font-size: 0.78em; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.38em 0.8em; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--text); background: rgba(15, 23, 42, 0.6);
+}
+.chip::before { content: ""; width: 0.55em; height: 0.55em; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.chip.ok { color: var(--ok); border-color: rgba(52, 211, 153, 0.35); }
+.chip.sim { color: var(--cyan); border-color: rgba(34, 211, 238, 0.35); }
+.chip.syn { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.4); }
+.chip.warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.4); }
+.chip.bad { color: var(--bad); border-color: rgba(248, 113, 113, 0.4); }
+.chip.bench { color: #93c5fd; border-color: rgba(59, 130, 246, 0.4); }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 20px 50px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+.mono { font-family: var(--font-mono); }
