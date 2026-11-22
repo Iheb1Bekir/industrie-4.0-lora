@@ -12,6 +12,7 @@
 </p>
 
 <p align="center">
+<a href="https://iheb1bekir.github.io/industrie-4.0-lora/"><b>Website</b></a> ·
 <a href="#demonstration">Demo</a> ·
 <a href="https://github.com/Iheb1Bekir/RPM_LoRa_Research">Simulation repository</a> ·
 <a href="report/main.pdf">Report (PDF)</a> ·
@@ -26,7 +27,7 @@
 
 <a href="site/media/rpm-lora-showcase.mp4"><img src="site/media/readme-video-thumbnail.jpg" alt="Watch the 76-second walkthrough: bench prototype, live dashboard, LoRa digital twin, early-warning model and OMNeT++/FLoRa simulation" width="100%"></a>
 
-76-second walkthrough built from real recordings: the bench prototype, the dashboard in simulation mode (all patients synthetic), the LoRa digital twin, the early-warning page and the OMNeT++/FLoRa run. The project website (`site/`) adds an animated replay of the simulated network, an interactive architecture explorer and the results.
+76-second walkthrough built from real recordings: the bench prototype, the dashboard in simulation mode (all patients synthetic), the LoRa digital twin, the early-warning page and the OMNeT++/FLoRa run. The [project website](https://iheb1bekir.github.io/industrie-4.0-lora/) (source in `site/`) adds an animated replay of the simulated network, an interactive architecture explorer and the results.
 
 ## Overview
 
