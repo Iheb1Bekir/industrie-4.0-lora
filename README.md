@@ -14,6 +14,9 @@
 <p align="center">
 <a href="https://iheb1bekir.github.io/industrie-4.0-lora/"><b>Website</b></a> ·
 <a href="#demonstration">Demo</a> ·
+<a href="#features-of-the-web-platform">Features</a> ·
+<a href="#ai-early-warning-model">AI model</a> ·
+<a href="#patient-map">Map</a> ·
 <a href="https://github.com/Iheb1Bekir/RPM_LoRa_Research">Simulation repository</a> ·
 <a href="report/main.pdf">Report (PDF)</a> ·
 <a href="presentation/RPM_LoRa_presentation.pdf">Presentation (PDF)</a> ·
@@ -76,13 +79,51 @@ virtual devices (simulation engine) ──────────────�
 
 Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/PROTOCOL_SPECIFICATION.md`](docs/PROTOCOL_SPECIFICATION.md) · [`docs/SECURITY.md`](docs/SECURITY.md).
 
-## Web monitoring interface
+## Features of the web platform
 
-| Clinical overview | LoRa network digital twin |
+All screens below show **simulation mode**: every patient, measurement and location is synthetic.
+
+| Feature | What it does |
 |---|---|
-| <img src="site/media/dashboard-overview.webp" alt="Clinical overview with KPIs, data-flow counters, patient cards and alerts"> | <img src="site/media/dashboard-network.webp" alt="LoRa network digital twin with direct and relay paths and RSSI per node"> |
+| 🩺 Clinical overview and patients | live KPIs, data-flow counters, patient cards with HR, SpO₂, temperature, device status and AI risk |
+| 🤖 AI early warning | a model trained in this repository predicts a sustained vital-sign alert **up to 10 minutes ahead**, with a reason for every prediction |
+| 🗺️ Patient map | every patient on an OpenStreetMap map, colour-coded by status, updated live |
+| 📡 LoRa network digital twin | direct and relayed paths; per-node RSSI, SNR, delivery ratio, hop count and latency |
+| 🔔 Alerts | acknowledge, escalate and resolve, with an audit trail, plus reports |
+| 👥 Roles | doctor; medical assistant for assigned patients; family caregiver for one patient with recorded consent, all enforced on the server |
+| ⚡ Live updates | server-sent events, no page reload; works offline on the Raspberry Pi 5 |
 
-Server-side roles (doctor; medical assistant for assigned patients; family caregiver for one patient with recorded consent), live updates over server-sent events, an alert lifecycle with escalation, a patient map with fictional coordinates, and an early-warning page with calibration and per-prediction explanations. Screens show **simulation mode**: every patient is synthetic.
+### Clinical overview and patients
+
+| Clinical overview | Patient list |
+|---|---|
+| <img src="site/media/dashboard-overview.webp" alt="Clinical overview with KPIs, data-flow counters, patient cards and alerts"> | <img src="site/media/dashboard-patients.webp" alt="Patient list with status, heart rate, SpO2, temperature, device status, open alerts and AI risk per patient"> |
+
+### AI early-warning model
+
+<img src="site/media/dashboard-ai.webp" alt="AI intelligence page: calibration curve, comparison of five models on the same test set, and the live prediction history with the top factors behind each prediction" width="100%">
+
+The gateway runs a model that **we trained ourselves** (`ml/`) and that runs locally, with no cloud service:
+
+- **Question it answers:** will this patient enter a sustained alert (HR > 120 bpm, SpO₂ < 92 % or temperature ≥ 38.0 °C on two consecutive samples) within the next 10 minutes, given the last 15 minutes of measurements?
+- **Training:** a synthetic dataset of 600 patients (586,000 prediction windows), split by patient 60/20/20 so that no test patient is seen in training. Five models are compared under the same protocol; **histogram gradient boosting** was selected for the best validation PR-AUC at the lowest latency (4.8 ms per prediction).
+- **Features:** 10-minute trends, variability, artifact-robust medians, the change against the patient's own baseline and the time left before a threshold at the current trend.
+- **Explainable:** every prediction shows its top factors (for example "temperature: 10-min maximum = 39.49"), and the probabilities are calibrated (isotonic) so a 5 % risk means about 5 %.
+- **Results on held-out synthetic patients:** 92 of 97 alert episodes warned in advance, median lead time **8.5 minutes**; PR-AUC 0.543 at 1.6 % prevalence; still too many false alarms (7.06 episodes per patient-day).
+
+Full evaluation, confusion matrix and feature importances: [`docs/MODEL_EVALUATION.md`](docs/MODEL_EVALUATION.md) · pipeline: [`docs/ML_PIPELINE.md`](docs/ML_PIPELINE.md). Synthetic data only: the model must be retrained and validated on real, ethically approved data before any clinical use.
+
+### Patient map
+
+<img src="site/media/dashboard-map.webp" alt="Patient map of Mahdia, Tunisia: patient markers coloured by status (normal, warning, critical, prediction warning, offline) on OpenStreetMap" width="100%">
+
+Patients appear on a Leaflet / OpenStreetMap map (Leaflet is vendored, so the page itself works offline). Markers take the patient's live status, **normal, warning, critical, prediction warning** (from the AI model) or **offline**, and show a summary popup. Only patients with an authorised location are shown, and only to users allowed to see them. The demonstration positions are **fictional coordinates** generated around Mahdia, Tunisia.
+
+### LoRa network digital twin
+
+<img src="site/media/dashboard-network.webp" alt="LoRa network digital twin with direct and relay paths and RSSI per node" width="100%">
+
+The network page draws the gateway, relays and patient nodes with their direct or relayed paths, per-node RSSI, SNR, delivery ratio, hop count and latency, and imports the OMNeT++/FLoRa result summary for comparison.
 
 ## OMNeT++ / FLoRa network simulation
 
