@@ -4,11 +4,10 @@ Stdlib only. Usage (from the repository root):
   python site/tools/render_media.py frames site/design/media.html site/design/out
   python site/tools/render_media.py pdf site/design/carousel.html site/design/out/carousel.pdf
 """
-import base64, json, os, socket, struct, subprocess, sys, tempfile, time, urllib.request
+import base64, json, os, shutil, socket, struct, subprocess, sys, tempfile, time, urllib.request
 from pathlib import Path
 
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
-PORT = 9334
 
 
 class WS:
@@ -138,28 +137,72 @@ def write_image_pdf(path, jpgs, w_pt, h_pt, title=""):
     Path(path).write_bytes(bytes(buf))
 
 
-def start():
-    prof = tempfile.mkdtemp(prefix="rpm-edge-")
-    proc = subprocess.Popen([EDGE, "--headless=new", f"--remote-debugging-port={PORT}", f"--user-data-dir={prof}",
-                             "--no-first-run", "--disable-extensions", "--hide-scrollbars", "--allow-file-access-from-files",
-                             "--force-color-profile=srgb", "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(100):
+class Edge:
+    """A private headless Edge: its own temp profile and a free DevTools port (read from DevToolsActivePort, so it never
+    talks to another instance). stop() closes it, kills whatever is left of it and deletes the profile."""
+
+    def __init__(self):
+        self.prof = tempfile.mkdtemp(prefix="rpm-edge-")
+        self.proc = subprocess.Popen([EDGE, "--headless=new", "--remote-debugging-port=0", f"--user-data-dir={self.prof}",
+                                      "--no-first-run", "--disable-extensions", "--hide-scrollbars",
+                                      "--allow-file-access-from-files", "--force-color-profile=srgb",
+                                      "--disable-background-mode", "about:blank"],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.port = self.browser_path = None
+
+    def connect(self):
+        active = Path(self.prof) / "DevToolsActivePort"
+        for _ in range(150):
+            try:
+                port, path = active.read_text().split()[:2]
+                self.port, self.browser_path = int(port), path
+                break
+            except (OSError, ValueError):
+                if self.proc.poll() is not None:
+                    raise RuntimeError(f"Edge exited with code {self.proc.returncode}")
+                time.sleep(0.2)
+        else:
+            raise RuntimeError("Edge did not open its DevTools port")
+        pages = json.load(urllib.request.urlopen(f"http://127.0.0.1:{self.port}/json/list", timeout=5))
+        ws = WS(next(t for t in pages if t["type"] == "page")["webSocketDebuggerUrl"])
+        ws.call("Page.enable")
+        return ws
+
+    def stop(self):
+        if self.port:
+            try:  # Browser.close belongs to the browser target, not to a page.
+                WS(f"ws://127.0.0.1:{self.port}{self.browser_path}").call("Browser.close")
+            except Exception:
+                pass
         try:
-            urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json/version", timeout=2).read()
-            break
-        except Exception:
-            time.sleep(0.2)
-    pages = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json/list", timeout=5))
-    ws = WS(next(t for t in pages if t["type"] == "page")["webSocketDebuggerUrl"])
-    ws.call("Page.enable")
-    return proc, ws
+            self.proc.wait(10)
+        except subprocess.TimeoutExpired:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(self.proc.pid)], capture_output=True)
+            else:
+                self.proc.kill()
+        if os.name == "nt":  # Edge can outlive the launched process: kill anything still using this profile.
+            prof = self.prof.replace("'", "''")
+            subprocess.run(["powershell", "-NoProfile", "-Command",
+                            "Get-CimInstance Win32_Process -Filter \"Name='msedge.exe'\" | "
+                            f"Where-Object {{ $_.CommandLine -like '*{prof}*' }} | "
+                            "ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"],
+                           capture_output=True)
+        for _ in range(20):
+            shutil.rmtree(self.prof, ignore_errors=True)
+            if not os.path.exists(self.prof):
+                break
+            time.sleep(0.5)
+        else:
+            print("warning: could not delete", self.prof, file=sys.stderr)
 
 
 def main():
     mode, html, out = sys.argv[1], Path(sys.argv[2]).resolve(), Path(sys.argv[3]).resolve()
     url = html.as_uri()
-    proc, ws = start()
+    edge = Edge()
     try:
+        ws = edge.connect()
         if mode == "frames":
             out.mkdir(parents=True, exist_ok=True)
             open_page(ws, url, 1080, 1080)
@@ -189,15 +232,7 @@ def main():
             write_image_pdf(out, jpgs, 810, 1012.5, title=ev(ws, "document.title"))
             print("pdf", out.name, n, "pages,", out.stat().st_size // 1024, "KiB", flush=True)
     finally:
-        try:
-            ws.call("Browser.close")
-        except Exception:
-            pass
-        proc.terminate()
-        try:
-            proc.wait(10)
-        except Exception:
-            proc.kill()
+        edge.stop()
 
 
 if __name__ == "__main__":
